@@ -1,6 +1,4 @@
 - name: 1.1 Verify all Apple-provided software is current
-  tags:
-    - Level 1
   command: softwareupdate -i -a
 
 - name: 1.2 Enable Auto Update
@@ -11,3 +9,12 @@
 
 - name: 1.4 Enable app update installs 
   command: defaults write /Library/Preferences/com.apple.commerce AutoUpdate -bool TRUE 
+
+- name: 1.5 Enable system data files and security updates install
+  command: 
+  - defaults write /Library/Preferences/com.apple.SoftwareUpdate ConfigDataInstall -bool true 
+  - defaults write /Library/Preferences/com.apple.SoftwareUpdate CriticalUpdateInstall -bool true 
+
+- name: 1.6 Enable macOS update installs
+  command: defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates -bool TRUE
+  
