@@ -4,4 +4,8 @@
 - name: 1.2 Enable Auto Update
   command: defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
 
-- name: 1.3
+- name: 1.3 Enable Download new updates when available
+  command: defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true
+
+- name: 1.4 Enable app update installs 
+  command: defaults write /Library/Preferences/com.apple.commerce AutoUpdate -bool TRUE 
