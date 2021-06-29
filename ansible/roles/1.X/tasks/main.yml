@@ -1,4 +1,6 @@
 - name: 1.1 Verify all Apple-provided software is current
+  tags:
+    - Level 1
   command: softwareupdate -i -a
 
 - name: 1.2 Enable Auto Update
