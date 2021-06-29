@@ -1,0 +1,4 @@
+## 2.1.1 Turn off Bluetooth, if no paired devices exist
+if [[ $(system profiler SPBluetotthDataType | grep "Bluetooth:" -A 20 | grep Connectable | grep "Connectable: No. ")]]; then 
+    $ defaults write /Library/Preferences/com.apple.Bluetooth ControllerPowerState -int 0 
+    $ killall -HUP blued

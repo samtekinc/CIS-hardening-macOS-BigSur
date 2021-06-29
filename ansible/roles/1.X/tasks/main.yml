@@ -17,4 +17,4 @@
 
 - name: 1.6 Enable macOS update installs
   command: defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates -bool TRUE
-  
+
