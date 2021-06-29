@@ -6,3 +6,4 @@
 - name: 1.2 Enable Auto Update
   command: defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
 
+- name: 1.3
