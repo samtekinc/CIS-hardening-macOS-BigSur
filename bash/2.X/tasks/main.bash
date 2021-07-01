@@ -20,25 +20,31 @@ done
 done
 
 ## 2.3.2 Secure screen saver corners
-cornerone= $user defaults read com.apple.dock wvous-tl-corner
-cornertwo= $user defaults read com.apple.dock wvous-bl-corner
-cornerthree= $user defaults read com.apple.dock wvous-tr-corner
-cornerfour= $user defaults read com.apple.dock wvous-br-corner
-corneronefix= $user defaults write com.apple.dock wvous-tl-corner -int 0
-cornertwofix= $user defaults write com.apple.dock wvous-bl-corner -int 0
-cornerthreefix= $user defaults write com.apple.dock wvous-tr-corner -int 0
-cornerfourfix= $user defaults write com.apple.dock wvous-br-corner -int 0 
+cornerone=$(defaults read com.apple.dock wvous-tl-corner)
+cornertwo=$(defaults read com.apple.dock wvous-bl-corner)
+cornerthree=$(defaults read com.apple.dock wvous-tr-corner)
+cornerfour=$(defaults read com.apple.dock wvous-br-corner)
+corneronefix="defaults write com.apple.dock wvous-tl-corner -int 0"
+cornertwofix="defaults write com.apple.dock wvous-bl-corner -int 0"
+cornerthreefix="defaults write com.apple.dock wvous-tr-corner -int 0"
+cornerfourfix="defaults write com.apple.dock wvous-br-corner -int 0" 
 
 for user in $users; do
+    su $user
+    cornerone=$(defaults read com.apple.dock wvous-tl-corner)
     if [ $cornerone == 6 ]; then 
         $corneronefix
     fi 
-    if [$cornertwo == 6 ]; then
+    cornertwo=$(defaults read com.apple.dock wvous-bl-corner)
+    if [ $cornertwo == 6 ]; then
         $cornertwofix
     fi
+    cornerthree=$(defaults read com.apple.dock wvous-tr-corner)
     if [ $cornerthree == 6 ]; then
         $cornerthreefix
     fi
+    cornerfour=$(defaults read com.apple.dock wvous-br-corner)
     if [ $cornerfour == 6 ]; then
         $cornerfourfix
     fi
+done
