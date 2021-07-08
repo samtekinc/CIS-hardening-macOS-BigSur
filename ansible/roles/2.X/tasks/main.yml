@@ -8,3 +8,15 @@
 
 - name: "2.3.1 Set an inactivity interval of 20 minutes or less for the screen saver"
   command: defaults -currentHost read com.apple.screensaver idleTime
+
+- name: "2.4.1 Disable Removte Apple Events"
+  command: systemsetup -setremoteappleevents off
+
+- name: "2.4.2 Disable Internet Sharing"
+  command: defaults write /Library/Preferences/SystemConfiguration/com.apple.nat NAT -dict Enabled -int 0
+
+- name: "2.4.3 Disable Screen Sharing"
+  command: launchctl disable system/com.apple.screensharing
+
+- name: "2.4.4 Disable printer Sharing"
+  command: cupsctl --no-share-printers

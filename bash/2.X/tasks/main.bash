@@ -27,7 +27,7 @@ cornerfour=$(defaults read com.apple.dock wvous-br-corner)
 corneronefix="defaults write com.apple.dock wvous-tl-corner -int 0"
 cornertwofix="defaults write com.apple.dock wvous-bl-corner -int 0"
 cornerthreefix="defaults write com.apple.dock wvous-tr-corner -int 0"
-cornerfourfix="defaults write com.apple.dock wvous-br-corner -int 0" 
+cornerfourfix="defaults write com.apple.dock wvous-br-corner -int 10" 
 
 for user in $users; do
     su $user
@@ -48,3 +48,8 @@ for user in $users; do
         $cornerfourfix
     fi
 done
+
+
+# 2.3.3 Familiarize users with screen lock tools or corner to Start Screen Saver (Manual)
+# This remediation is made in 2.3.2.
+# In this case the bottom right corner's functionality is to start the Screensaver.
