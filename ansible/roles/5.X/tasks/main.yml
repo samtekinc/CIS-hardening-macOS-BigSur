@@ -19,24 +19,24 @@
   command: |
     IFS=$'\n'
     for app in $( find /Applications -iname "*\.app" -type d -perm -2 ); do
-		  chmod -R o-w "$app"
-	  done
+      chmod -R o-w "$app"
+    done
 
 - name: 5.1.3 Check System folder for world writable files
   tags: level_1
   command: |
     IFS=$'\n'
-	  for directory in $( find /System -type d -perm -2 | grep -v "Public/Drop Box" ); do
-		  chmod -R o-w "$directory"
-	  done
+    for directory in $( find /System -type d -perm -2 | grep -v "Public/Drop Box" ); do
+      chmod -R o-w "$directory"
+    done
 
 - name: 5.1.4 Check Library folder for world writable files
   tags: level_2
   command: |
     IFS=$'\n'
-	  for directory in $( find /Library -type d -perm -2 | grep -v Caches | grep -v Audio); do
-		  chmod -R o-w "$directory"
-	  done
+    for directory in $( find /Library -type d -perm -2 | grep -v Caches | grep -v Audio); do
+      chmod -R o-w "$directory"
+    done
 
 # 5.2
 
@@ -112,8 +112,8 @@
   tags: level_1
   command: |
     sed -i ".old" '/Default !tty_tickets/d' /etc/sudoers
-	  chmod 644 /etc/sudoers
-	  chown root:wheel /etc/sudoers
+    chmod 644 /etc/sudoers
+    chown root:wheel /etc/sudoers
 
 - name: 5.6 Ensure login keychain is locked when the computer sleeps
   tags: level_2
