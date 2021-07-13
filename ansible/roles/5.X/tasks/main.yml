@@ -1,0 +1,38 @@
+- name: Get Users
+  shell: dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root'
+  register: local_users
+
+- name: 5.1.1 Secure Home Folders
+  ansible.builtin.file:
+    path: /Users/"{{ item }}"
+    owner: "{{ item }}"
+    mode: og-rwx
+    state: directory
+    recurse: yes
+  loop: "{{ local_users }}"
+  tags: level_1
+
+- name: 5.1.2 Check System Wide Applications for appropriate permissions
+  tags: level_1
+  command: |
+    IFS=$'\n'
+    for app in $( find /Applications -iname "*\.app" -type d -perm -2 ); do
+		  chmod -R o-w "$app"
+	  done
+
+- name: 5.1.3 Check System folder for world writable files
+  tags: level_1
+  command: |
+    IFS=$'\n'
+	  for directory in $( find /System -type d -perm -2 | grep -v "Public/Drop Box" ); do
+		  chmod -R o-w "$directory"
+	  done
+
+- name: 5.1.4 Check Library folder for world writable files
+  tags: level_2
+  command: |
+    IFS=$'\n'
+	  for directory in $( find /Library -type d -perm -2 | grep -v Caches | grep -v Audio); do
+		  chmod -R o-w "$directory"
+	  done
+
