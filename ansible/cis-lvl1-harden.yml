@@ -10,4 +10,5 @@
   connection: local
   roles:
     - 1.X
+    - 6.X
     
