@@ -1,0 +1,193 @@
+- name: Get Users
+  shell: dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root'
+  register: local_users
+
+# 5.1
+
+- name: 5.1.1 Secure Home Folders
+  ansible.builtin.file:
+    path: /Users/"{{ item }}"
+    owner: "{{ item }}"
+    mode: og-rwx
+    state: directory
+    recurse: yes
+  loop: "{{ local_users }}"
+  tags: level_1
+
+- name: 5.1.2 Check System Wide Applications for appropriate permissions
+  tags: level_1
+  command: |
+    IFS=$'\n'
+    for app in $( find /Applications -iname "*\.app" -type d -perm -2 ); do
+      chmod -R o-w "$app"
+    done
+
+- name: 5.1.3 Check System folder for world writable files
+  tags: level_1
+  command: |
+    IFS=$'\n'
+    for directory in $( find /System -type d -perm -2 | grep -v "Public/Drop Box" ); do
+      chmod -R o-w "$directory"
+    done
+
+- name: 5.1.4 Check Library folder for world writable files
+  tags: level_2
+  command: |
+    IFS=$'\n'
+    for directory in $( find /Library -type d -perm -2 | grep -v Caches | grep -v Audio); do
+      chmod -R o-w "$directory"
+    done
+
+# 5.2
+
+- name: 5.2.1 Configure account lockout threshold
+  tags: level_1
+  command: pwpolicy -n /Local/Default -setglobalpolicy "maxFailedLoginAttempts=5"
+
+- name: 5.2.2 Set a minimum password length
+  tags: level_1
+  command: pwpolicy -n /Local/Default -setglobalpolicy "minChars=15"
+
+- name: 5.2.3 Complex passwords must contain an Alphabetic Character
+  tags: level_2
+  command: |
+    if [[ $(pwpolicy -getaccountpolicies | grep -A1 minimumLetters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1 ]]; then
+      pwpolicy -n /Local/Default -setglobalpolicy "requiresAlpha=1"
+    fi
+  # Only change if the output is less than 1. If greater, do not reduce to 1. This should be modified to organizational threshold
+
+- name: 5.2.4 Complex passwords must contain a Numeric Character
+  tags: level_2
+  command: |
+    if [[ $(pwpolicy -getaccountpolicies | grep -A1 minimumNumericCharacters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1 ]]; then
+      pwpolicy -n /Local/Default -setglobalpolicy "requiresNumeric=1"
+    fi
+  # Only change if the output is less than 1. If greater, do not reduce to 1. This should be modified to organizational threshold
+
+- name: 5.2.5 Complex passwords must contain a Special Character
+  tags: level_2
+  command: |
+    if [[ $(pwpolicy -getaccountpolicies | grep -A1 minimumSymbols | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1 ]]; then
+      pwpolicy -n /Local/Default -setglobalpolicy "requiresSymbol=1"
+    fi
+  # Only change if the output is less than 1. If greater, do not reduce to 1. This should be modified to organizational threshold
+
+- name: 5.2.6 Complex passwords must [contain] uppercase and lowercase letters
+  tags: level_2
+  command: |
+    if [[ $(pwpolicy -getaccountpolicies | grep -A1 minimumMixedCaseCharacters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1 ]]; then
+      pwpolicy -n /Local/Default -setglobalpolicy "requiresMixedCase=1"
+    fi
+  # Only change if the output is less than 1. If greater, do not reduce to 1. This should be modified to organizational threshold
+
+- name: 5.2.7 Password Age
+  tags: level_1
+  command: |
+    if [[ $(pwpolicy -getaccountpolicies | grep -A1 policyAttributeDaysUntilExpiration | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) > 365 ]]; then
+      pwpolicy -n /Local/Default -setglobalpolicy "maxMinutesUntilChangePassword=525600"
+    fi
+  # Only change if the output is greater than 365 days. If less, do not increase to 365. This should be modified to organizational threshold
+
+- name: 5.2.8 Password History
+  tags: level_1
+  command: |
+    if [[ $(pwpolicy -getaccountpolicies | grep -A1 policyAttributePasswordHistoryDepth | tail -1 | cut -d'>' -f2 | cut -d '<' - f1) < 15 ]]; then
+      pwpolicy -n /Local/Default -setglobalpolicy "usingHistory=15"
+    fi
+  # Only change if the output is less than 15 password entries. If greater, do not reduce to 15. This should be modified to organizational threshold
+
+- name: 5.3 Reduce the sudo timeout period
+  tags: level_1
+  command: echo "Defaults timestamp_timeout=0" >> /etc/sudoers
+
+- name: 5.4 Automatically lock the login keychain for inactivity
+  tags: level_2
+  command: |
+    su "{{ item }}"
+    security set-keychain-settings -t 21600 /Users/"{{ item }}"/Library/Keychains/login.keychain
+  loop: "{{ local_users }}"
+  # This should be modified to organizational threshold
+
+- name: 5.5 Use a separate timestamp for each user/tty combo
+  tags: level_1
+  command: |
+    sed -i ".old" '/Default !tty_tickets/d' /etc/sudoers
+    chmod 644 /etc/sudoers
+    chown root:wheel /etc/sudoers
+
+- name: 5.6 Ensure login keychain is locked when the computer sleeps
+  tags: level_2
+  command: |
+    su "{{ item }}"
+    security set-keychain-settings -l /Users/"{{ item }}"/Library/Keychains/login.keychain
+  loop: "{{ local_users }}"
+
+- name: 5.7 Do not enable the "root" account
+  tags: level_1
+  command: dscl . -create /Users/root UserShell /usr/bin/false
+
+- name: 5.8 Disable automatic login
+  tags: level_1
+  command: defaults delete /Library/Preferences/com.apple.loginwindow autoLoginUser
+
+- name: 5.9 Require a password to wake the computer from sleep or screen saver
+  tags: level_1
+  command: |
+    su "{{ item }}"
+    defaults write /Users/"{{ item }}"/Library/Preferences/com.apple.screensaver askForPassword -int 1
+  loop: "{{ local_users }}"
+
+- name: 5.10 Ensure system is set to hibernate
+  tags: level_2
+  command: |
+    pmset -a standbydelaylow 600
+    pmset -a standbydelayhigh 600
+    pmset -a highstandbythreshold 90
+    pmset -a destroyfvkeyonstandby 1
+    pmset -a hibernatemode 25
+  # This should be modified to organizational threshold
+
+- name: 5.11 Require an administrator password to access system-wide preferences
+  tags: level_1
+  command: |
+    security authorizationdb read system.preferences > /tmp/system.preferences.plist
+    defaults write /tmp/system.preferences.plist shared -bool false
+    security authorizationdb write system.preferences < /tmp/system.preferences.plist
+    rm /tmp/system.preferences.plist
+
+- name: 5.12 Ensure an administrator account cannot login to another user's active and locked session
+  tags: level_1
+  command: security authorizationdb write system.login.screensaver use-login-window-ui
+
+- name: 5.13 Create a custom message for the Login Screen
+  tags: level_1
+  command: defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "Access to this system is reserved for authorized use only. The use of this system may be monitored."
+  # This should be modified per organzational standards
+
+- name: 5.14 Create a Login window banner
+  tags: level_2
+  command: echo "Access to this system is reserved for authorized use only. The use of this system may be monitored." >> /Library/Security/PolicyBanner.txt
+  # This should be modified per organzational standards
+
+- name: 5.15 Do not enter a password-related hint
+  tags: level_1
+  command: dscl . -delete /Users/"{{ item }}" hint
+  loop: "{{ local_users }}"
+
+- name: 5.16 Disable Fast User Switching
+  tags: level_2
+  command: defaults write /Library/Preferences/.GlobalPreferences MultipleSessionEnabled -bool false
+
+# 5.17 TBD
+
+- name: 5.18 System Integrity Protection status
+  tags: level_1
+  command: echo "Run '/usr/bin/csrutil enable' from the Recovery OS" #Requires a reboot to take effect
+
+- name: 5.19 Enable Sealed System Volume (SSV)
+  tags: level_1
+  command: echo "Run '/usr/bin/csrutil enable authenticated-root' from the Recovery OS" #Requires a reboot to take effect
+
+- name: 5.20 Enable Library Validation
+  tags: level_1
+  command: defaults write /Library/Preferences/com.apple.security.libraryvalidation.plist DisableLibraryValidation DisableLibraryValidation -bool false
