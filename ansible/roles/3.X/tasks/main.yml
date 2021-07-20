@@ -23,14 +23,24 @@
     regexp: 'expire-after:'
     line: expire-after:60d 
 
-- name: 3.5 Control access to audit records
+- name: 3.5 Control access to audit records (1)
   tags: level_1
-  command: |
-    chown -R root:wheel /etc/security/audit_control
-    chmod -R -o-rw /etc/security/audit_control
-    chown -R root:wheel /var/audit/
-    chmod -R -o-rw /var/audit/
+  ansible.builtin.file:
+    path: /etc/security/audit_control
+    owner: root
+    group: wheel
+    mode: -o-rw
 
+- name: 3.5 Control access to audit records (2)
+  tags: level_1
+  ansible.builtin.file:
+    path: /var/audit/
+    owner: root
+    group: wheel
+    mode: -o-rw
+    state: directory
+    recurse: yes
+    
 - name: 3.6 Ensure Firewall is configured to log 
   tags: level_1
   command: /usr/libexec/ApplicationFirewall/socketfilterfw --setloggingmode on
