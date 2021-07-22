@@ -1,3 +1,9 @@
+- name: Get Users
+  shell: dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root'
+  register: local_users
+
+- debug: var=local_users.stdout_lines
+
 - name: "2.2.1 Enable Set time and date automatically"
   command: "{{ item }}"
   with_items:
@@ -8,10 +14,13 @@
   command: systemsetup -getnetworktimeserver
 
 - name: "2.3.1 Set an inactivity interval of 20 minutes or less for the screen saver"
-  command: defaults -currentHost read com.apple.screensaver idleTime
+  shell: |
+    su "{{ item }}"
+    defaults -currentHost write com.apple.screensaver idleTime -int 1200
+  with_items: "{{ local_users.stdout_lines }}"
 
-- name: "2.4.1 Disable Removte Apple Events"
-  command: systemsetup -setremoteappleevents off
+#- name: "2.4.1 Disable Remote Apple Events" #Potential issue with Full Disk Access here: https://support.apple.com/en-us/HT210595
+#  command: systemsetup -setremoteappleevents off
 
 - name: "2.4.2 Disable Internet Sharing"
   command: defaults write /Library/Preferences/SystemConfiguration/com.apple.nat NAT -dict Enabled -int 0
@@ -22,8 +31,13 @@
 - name: "2.4.4 Disable printer Sharing"
   command: cupsctl --no-share-printers
 
-- name: "2.4.5 Disable Remote Login"
-  command: yes | systemsetup -setremotelogin off
+- name: "2.4.5 Disable Remote Login" #Gotta figure this out
+  debugger: always
+  expect:
+    command: systemsetup -setremotelogin off
+    echo: yes
+    responses:
+      Do: yes
 
 #note for 2.4.6 a reboot is required to have the service be unchecked. 
 - name: "2.4.6 Disable DVD or CD Sharing"
