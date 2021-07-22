@@ -1,0 +1,41 @@
+- name: 6.1.1 Display login window as name and password
+  tags: level_1
+  command: defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME -bool true
+  # Note GUI will not display the updated setting until the current user(s) logs out. 
+
+- name: 6.1.2 Disable "Show password hints" 
+  tags: level_1
+  command: defaults write /Library/Preferences/com.apple.loginwindow RetriesUntilHint -int 0
+
+- name: 6.1.3 Disable guest account login 
+  tags: level_1
+  command: defaults write /Library/Preferences/com.apple.loginwindow GuestEnabled -bool false
+
+- name: 6.1.4 Disable "Allow guests to connect to shared folders"
+  tags: level_1
+  command: |
+    defaults write /Library/Preferences/com.apple.AppleFileServer guestAccess -bool false
+    defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server AllowGuestAccess -bool false
+
+- name: 6.1.5 Remove Guest home folder 
+  tags: level_1
+  command: rm -R /Users/Guest
+
+- name: 6.2 Turn on filename extensions 
+  tags: level_1 
+  command: |
+    users=$(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root')
+    for user in $users; do 
+      su $user
+      defaults write /Users/$user/Library/Preferences/.GlobalPreferences.plist AppleShowAllExtensions -bool true 
+    done
+
+- name: 6.3 Disable the automatic run of safe files in Safari 
+  tags: level_1
+  command: |
+    users=$(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root')
+    for user in $users; do 
+      su $user
+      defaults write /Users/$user/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari AutoOpenSafeDownloads -bool false
+    done
+
