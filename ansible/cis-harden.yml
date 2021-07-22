@@ -1,14 +1,14 @@
 - hosts: localhost
   connection: local
   tasks:
-  - debug:
+  - debug: 
       msg: Check we are running in the directory of the script
     failed_when: not ansible_env.PWD.endswith('/ansible')
-
 - hosts: localhost
   connection: local
   roles:
     - 1.X
     - 2.X
+    - 3.X
     - 4.X
     - 5.X
