@@ -8,4 +8,7 @@
   connection: local
   roles:
     - 1.X
+    - 2.X
     - 3.X
+    - 4.X
+    - 5.X

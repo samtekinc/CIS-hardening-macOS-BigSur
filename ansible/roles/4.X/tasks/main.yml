@@ -1,0 +1,25 @@
+# 4.1 Disable Bonjour advertising service is a Level 2 Remediation
+
+- name: 4.2 Enable "Show Wi-Fi status in menu bar"
+  tags: level_1
+  command: | 
+    users=$(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root')
+    for user in $users; do 
+      su $user
+      defaults -currentHost write com.apple.controlcenter.plist WiFi -int 18 
+    done 
+
+# 4.3 Create network specific locations is a Level 2 Remediation
+
+- name: 4.4 Ensure http server is not running 
+  tags: level_1
+  command: launchctl disable system/org.apache.httpd
+
+- name: 4.5 Ensure nfs server is not running. 
+  tags: level_1 
+  command: |
+    launchctl disable system/com.apple.nfsd 
+    rm /etc/exports
+
+# 4.6 Review Wi-Fi Settings is a Level 2 Remediation
+
