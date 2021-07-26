@@ -1,13 +1,15 @@
+- name: Get Users
+  shell: dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root'
+  register: local_users
+
 # 4.1 Disable Bonjour advertising service is a Level 2 Remediation
 
 - name: 4.2 Enable "Show Wi-Fi status in menu bar"
   tags: level_1
-  command: | 
-    users=$(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root')
-    for user in $users; do 
-      su $user
-      defaults -currentHost write com.apple.controlcenter.plist WiFi -int 18 
-    done 
+  shell: |
+    su "{{ item }}"
+    defaults -currentHost write com.apple.controlcenter.plist WiFi -int 18 
+  with_items: "{{ local_users.stdout_lines }}"
 
 # 4.3 Create network specific locations is a Level 2 Remediation
 

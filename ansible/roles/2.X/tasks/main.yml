@@ -2,7 +2,22 @@
   shell: dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root'
   register: local_users
 
-- debug: var=local_users.stdout_lines
+- name: Bluetooth Power state
+  shell: defaults read /Library/Preferences/com.apple.Bluetooth ControllerPowerState
+  register: bt_power
+
+#This check may be incorrect: https://workbench.cisecurity.org/tickets/13360?status=1
+- name: Bluetooth Paired Devices
+  shell: system_profiler SPBluetoothDataType | grep "Bluetooth:" -A 20 | grep Connectable
+  register: bt_datatype
+
+- name: FileVault Status
+  shell: fdesetup status
+  register: filevault_status
+
+- name: 2.1.1 Turn off Bluetooth, if no paired devices exist
+  shell: defaults write /Library/Preferences/com.apple.Bluetooth ControllerPowerstate -int 0 & killall -HUP blued
+  when: bt_power.stdout|int == 1 and bt_datatype.stdout == "Connectable{{':'}} No."
 
 - name: "2.2.1 Enable Set time and date automatically"
   command: "{{ item }}"
@@ -31,17 +46,17 @@
 - name: "2.4.4 Disable printer Sharing"
   command: cupsctl --no-share-printers
 
-- name: "2.4.5 Disable Remote Login" #Gotta figure this out
-  debugger: always
-  expect:
-    command: systemsetup -setremotelogin off
-    echo: yes
-    responses:
-      Do: yes
+#- name: "2.4.5 Disable Remote Login" #Gotta figure this out
+#  debugger: always
+#  expect:
+#    command: systemsetup -setremotelogin off
+#    echo: yes
+#    responses:
+#      Do: yes
 
 #note for 2.4.6 a reboot is required to have the service be unchecked. 
 - name: "2.4.6 Disable DVD or CD Sharing"
-  command: launcherctl disable system/com.apple.ODSAgent
+  command: launchctl disable system/com.apple.ODSAgent
 
 #- name: "2.4.7 Disable Bluetooth Sharing"
  #command: "{{ item }}"
@@ -51,17 +66,19 @@
 # This is done in bash, this is another option that needs to be corrected
 
 - name: "2.4.8 Disable File Sharing"
-  command: launcherctl unload -w /System/Library/LaunchDaemons/com.apple.smbd.plist
+  command: launchctl unload -w /System/Library/LaunchDaemons/com.apple.smbd.plist
 
 - name: "2.4.9 Disable Remote Management"
-  command: /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactive -stop 
+  command: /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate -stop 
 
 #- name: "2.4.12 Ensure AirDrop is Disabled"
  # command: for user in $users; do; su $user; defaults write com.apple.NetworkBrowser DisableAirDrop -bool true; done
  # This is done in bash, this is another option that needs to be corrected
 
-- name: "2.5.1.1 Enable FileVault"
-  command: if fdesetup status == "FileVault is Off."; then; fdesetup enable; fi 
+#- name: "2.5.1.1 Enable FileVault"
+#  command: fdesetup enable
+#  when: filevault_status.stdout == "FileVault is Off."
+#Unable to do without credentials being passed
 
 ##- name: "2.5.1.2 Ensure all user storage APFS volumes are encrypted"
 ## 2.5.1.3 Ensure all user storage CoreStorage volumes are encrypted 
@@ -81,3 +98,11 @@
 - name: "2.9 Disable Power Nap"
   command: pmset -a powernap 0 
 
+- name: 2.12 Automatic Actions for Optical Media 
+  tags: level_1
+  shell: |
+    su "{{ item.0 }}"
+    defaults write /Users/$user/Library/Preferences/com.apple.digihub "{{ item.1 }}" -dict action 1
+  with_nested:
+    - "{{ local_users.stdout_lines }}"
+    - ["com.apple.digihub.blank.cd.appeared", "com.apple.digihub.blank.dvd.appeared", "com.apple.digihub.cd.music.appeared", "com.apple.digihub.cd.picture.appeared", "com.apple.digihub.dvd.video.appeared"]
