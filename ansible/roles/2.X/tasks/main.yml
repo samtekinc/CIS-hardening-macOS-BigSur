@@ -46,9 +46,6 @@
   command: fdesetup status 
   register: filevault_status
 
-- name: Media Types
-  shell: media_type=("com.apple.digihub.blank.cd.appeared" "com.apple.digihub.blank.dvd.appeared" "com.apple.digihub.cd.music.appeared" "com.apple.digihub.cd.picture.appeared" "com.apple.digihub.dvd.video.appeared")
-  register: media_type 
 
 #- name: 2.1.1 Turn off Bluetooth, if no paired devices exist
  # shell: defaults write /Library/Preferences/com.apple.Bluetooth ControllerPowerstate -int 0 & killall -HUP blued
