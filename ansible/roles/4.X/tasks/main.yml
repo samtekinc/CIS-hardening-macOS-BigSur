@@ -1,4 +1,6 @@
-# 4.1 Disable Bonjour advertising service is a Level 2 Remediation
+- name: 4.1 Disable Bonjour advertising service 
+  tags: level_2
+  command: defaults write /Library/Preferences/com.apple.mDNSResponder.plist NoMulticastAdvertisements -bool true
 
 - name: 4.2 Enable "Show Wi-Fi status in menu bar"
   tags: level_1
@@ -9,7 +11,8 @@
       defaults -currentHost write com.apple.controlcenter.plist WiFi -int 18 
     done 
 
-# 4.3 Create network specific locations is a Level 2 Remediation
+# 4.3 Create network specific locations involves the removal and creation of any Network locations present on a mac machine, this can vary with your organization and cannot be automated. 
+
 
 - name: 4.4 Ensure http server is not running 
   tags: level_1
@@ -21,5 +24,5 @@
     launchctl disable system/com.apple.nfsd 
     rm /etc/exports
 
-# 4.6 Review Wi-Fi Settings is a Level 2 Remediation
+# 4.6 Review Wi-Fi Settings requires specific network device numbers and the option of on and off depends on your organization and cannot be automated.
 

@@ -2,7 +2,7 @@
   tags: level_1
   command: launchctl load -w /System/Library/LaunchDaemons/com.apple.auditd.plist
 
-# 3.2 Configure Security Auditing Flags per local organizational requirements is a Level 2 Remediation
+# 3.2 Configure Security Auditing Flags per local organizational requirements depends on your organization's policies if applicable
 
 - name: 3.3 Retain install.log for 365 or more days with no maximum size 
   tags: level_1
@@ -45,4 +45,6 @@
   tags: level_1
   command: /usr/libexec/ApplicationFirewall/socketfilterfw --setloggingmode on
 
-# 3.7 Software Inventory Considerations is a level 2 remediation 
+# 3.7 Software Inventory Considerations involves the removal of "unnecessary" applications and this can vary depending on your organization
+
+

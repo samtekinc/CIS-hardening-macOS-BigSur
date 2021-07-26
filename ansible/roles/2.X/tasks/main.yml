@@ -142,6 +142,17 @@
   tags: level_1
   command: /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate -stop 
 
+- name: 2.4.10 Disable Content Caching 
+  tags: level_2
+  command: AssetCacheManagerUtil deactivate
+
+- name: 2.4.11 Disable Media Sharing
+  tags: level_2
+  command: |
+    su "{{ item }}"
+    defaults write com.apple.amp.mediasharingd home-sharing-enabled -int 0
+  with_items: "{{ local_users.stdout_lines }}"
+
 - name: "2.4.12 Ensure AirDrop is Disabled"
   tags: level_1
   shell: |
@@ -166,6 +177,19 @@
   tags: level_1
   command: /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on
 
+- name: 2.5.3 Enable Location Services 
+  tags: level_2
+  command: launchctl load -w /System/Library/LaunchDaemons/com.apple.locationd.plist
+
+# 2.5.4 Monitor Location Services Access Has no set remediation and should be followed if applicable
+
+- name: 2.5.5 Disable sending diagnostic and usage data to Apple
+  tags: level_2
+  command: |
+    defaults write /Library/Application\ Support/CrashReporter/DiagnosticMessagesHistory.plist AutoSubmit -bool false
+    chmod 644 /Library/Application\ Support/CrashReporter/DiagnosticMessagesHistory.plist
+    chgrp admin /Library/Application\ Support/CrashReporter/DiagnosticMessagesHistory.plist
+
 - name: 2.5.6 Limit Ad tracking and personalized Ads
   tags: level_1
   shell: |
@@ -173,6 +197,18 @@
     defaults -currentHost write /Users/$user/Library/Preferences/com.apple.Adlib.plist allowApplePersonalizedAdvertising -bool false
   with_items: "{{ local_users.stdout_lines }}"
 
+# 2.6.1 iCloud configuration depends upon your organization's policies if applicable
+
+# 2.6.2 iCloud keychain depends upon your organization's policies if applicable
+
+# 2.6.3 iCloud Drive depends upon your organization's policies if applicable
+
+#- name: 2.6.4 iCloud Drive Document and Desktop sync   
+  #tags: level_2
+  #command: 
+# 2.6.4 requires UI scripting
+
+# 2.7.1 Time Machine Auto-Backup requires specific volume names that can vary across machines in order to function
 
 - name: "2.8 Disable Wake for network access"
   tags: level_1

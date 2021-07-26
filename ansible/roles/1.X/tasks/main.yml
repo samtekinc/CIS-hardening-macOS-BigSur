@@ -19,3 +19,5 @@
 - name: 1.6 Enable macOS update installs
   command: defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates -bool TRUE
 
+## 1.7 Computer Name Considerations is to be set to an organization's standards if applicable
+
