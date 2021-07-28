@@ -6,7 +6,7 @@
   shell: defaults read /Library/Preferences/com.apple.Bluetooth ControllerPowerState
   register: bt_power
 
-#This check may be incorrect: https://workbench.cisecurity.org/tickets/13360?status=1
+#This check will be updated in v1.3.0. See: https://workbench.cisecurity.org/tickets/13360
 - name: Bluetooth Paired Devices
   shell: system_profiler SPBluetoothDataType | grep "Bluetooth:" -A 20 | grep Connectable
   register: bt_datatype
