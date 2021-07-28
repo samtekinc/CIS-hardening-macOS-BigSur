@@ -17,14 +17,15 @@
 # 5.1
 
 - name: 5.1.1 Secure Home Folders
+  tags: level_1
   ansible.builtin.file:
     path: /Users/"{{ item }}"
     owner: "{{ item }}"
     mode: og-rwx
     state: directory
     recurse: yes
-  loop: "{{ local_users }}"
-  tags: level_1
+  with_items: "{{ local_users.stdout_lines }}"
+  
 
 - name: 5.1.2 Check System Wide Applications for appropriate permissions
   tags: level_1
@@ -44,13 +45,14 @@
     recurse: yes
   with_items: "{{ sww_files.stdout_lines }}"
 
-- name: 5.1.4 Check Library folder for world writable files
-  tags: level_2
-  command: |
-    IFS=$'\n'
-    for directory in $( find /Library -type d -perm -2 | grep -v Caches | grep -v Audio); do
-      chmod -R o-w "$directory"
-    done
+#- name: 5.1.4 Check Library folder for world writable files
+#  tags: level_2
+#  ansible.builtin.file:
+#    path: "{{ item }}"
+#    mode: o-w
+#    state: directory
+#    recurse: yes
+#  with_items: "{{ lww_files.stdout_lines }}"
 
 # 5.2
 
@@ -113,7 +115,7 @@
   command: |
     su "{{ item }}"
     security set-keychain-settings -t 21600 /Users/"{{ item }}"/Library/Keychains/login.keychain
-  loop: "{{ local_users }}"
+  with_items: "{{ local_users.stdout_lines }}"
   # This should be modified to organizational threshold
 
 - name: 5.5 Use a separate timestamp for each user/tty combo
@@ -128,7 +130,7 @@
   command: |
     su "{{ item }}"
     security set-keychain-settings -l /Users/"{{ item }}"/Library/Keychains/login.keychain
-  loop: "{{ local_users }}"
+  with_items: "{{ local_users.stdout_lines }}"
 
 - name: 5.7 Do not enable the "root" account
   tags: level_1
@@ -143,7 +145,7 @@
   command: |
     su "{{ item }}"
     defaults write /Users/"{{ item }}"/Library/Preferences/com.apple.screensaver askForPassword -int 1
-  loop: "{{ local_users }}"
+  with_items: "{{ local_users.stdout_lines }}"
 
 - name: 5.10 Ensure system is set to hibernate
   tags: level_2
@@ -180,7 +182,7 @@
 - name: 5.15 Do not enter a password-related hint
   tags: level_1
   command: dscl . -delete /Users/"{{ item }}" hint
-  loop: "{{ local_users }}"
+  with_items: "{{ local_users.stdout_lines }}"
 
 - name: 5.16 Disable Fast User Switching
   tags: level_2

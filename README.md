@@ -22,6 +22,10 @@ To run Level 2 hardening tasks only, run the following:
 `ansible-playbook cis-harden.yml --tags "level_2"`
 
 ## Caveats 
+
+### General
+- It is possible that certain user configurations that are being check in this playbook do not yet exist on an endpoint. When this is the case, we have added the `ignore_errors: yes` flag to those tasks and have coded the remediations to set the correct values when those user configuration checks have a return code of 1.
+
 ### 2.X
 - Task 2.5.1.2 _Ensure all user storage APFS volumes are encrypted_ requires specific volume names that can vary for different machines based on their configurations. To conduct this manually, see page 95 of the Benchmark. 
 - Task 2.5.1.3 _Ensure all user storage CoreStorage volumes are encrypted_ requires specific volume names that can vary for different machines based on their configurations. To conduct this manually, see page 99 of the Benchmark. 
