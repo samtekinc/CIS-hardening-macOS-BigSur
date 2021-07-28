@@ -17,15 +17,14 @@
 # 5.1
 
 - name: 5.1.1 Secure Home Folders
-  tags: level_1
   ansible.builtin.file:
     path: /Users/"{{ item }}"
     owner: "{{ item }}"
     mode: og-rwx
     state: directory
     recurse: yes
-  with_items: "{{ local_users.stdout_lines }}"
-  
+  loop: "{{ local_users }}"
+  tags: level_1
 
 - name: 5.1.2 Check System Wide Applications for appropriate permissions
   tags: level_1
@@ -108,29 +107,41 @@
 
 - name: 5.3 Reduce the sudo timeout period
   tags: level_1
-  command: echo "Defaults timestamp_timeout=0" >> /etc/sudoers
+  ansible.builtin.lineinfile: 
+    path: /etc/sudoers
+    regexp: 'Defaults timestamp_timeout='
+    line: "Defaults timestamp_timeout=0"
 
 - name: 5.4 Automatically lock the login keychain for inactivity
   tags: level_2
   command: |
     su "{{ item }}"
     security set-keychain-settings -t 21600 /Users/"{{ item }}"/Library/Keychains/login.keychain
-  with_items: "{{ local_users.stdout_lines }}"
+  loop: "{{ local_users }}"
   # This should be modified to organizational threshold
 
-- name: 5.5 Use a separate timestamp for each user/tty combo
+- name: 5.5 Use a separate timestamp for each user/tty combo (1) 
   tags: level_1
-  command: |
-    sed -i ".old" '/Default !tty_tickets/d' /etc/sudoers
-    chmod 644 /etc/sudoers
-    chown root:wheel /etc/sudoers
+  ansible.builtin.file:
+    path: /etc/sudoers
+    owner: root
+    group: wheel 
+    mode: -o-rw 
+
+- name: 5.5 Use a separate timestamp for each user/tty combo (2)
+  tags: level_1
+  shell: sed -i ".old" '/Default !tty_tickets/d' /etc/sudoers
+  ansible.builtin.file:
+    path: /etc/sudoers
+    state: absent 
+    regexp: "!tty_tickets"
 
 - name: 5.6 Ensure login keychain is locked when the computer sleeps
   tags: level_2
   command: |
     su "{{ item }}"
     security set-keychain-settings -l /Users/"{{ item }}"/Library/Keychains/login.keychain
-  with_items: "{{ local_users.stdout_lines }}"
+  loop: "{{ local_users }}"
 
 - name: 5.7 Do not enable the "root" account
   tags: level_1
@@ -138,14 +149,14 @@
 
 - name: 5.8 Disable automatic login
   tags: level_1
-  command: defaults delete /Library/Preferences/com.apple.loginwindow autoLoginUser
+  shell: defaults delete /Library/Preferences/com.apple.loginwindow autoLoginUser
 
 - name: 5.9 Require a password to wake the computer from sleep or screen saver
   tags: level_1
-  command: |
+  shell: |
     su "{{ item }}"
     defaults write /Users/"{{ item }}"/Library/Preferences/com.apple.screensaver askForPassword -int 1
-  with_items: "{{ local_users.stdout_lines }}"
+  loop: "{{ local_users }}"
 
 - name: 5.10 Ensure system is set to hibernate
   tags: level_2
@@ -159,7 +170,7 @@
 
 - name: 5.11 Require an administrator password to access system-wide preferences
   tags: level_1
-  command: |
+  shell: |
     security authorizationdb read system.preferences > /tmp/system.preferences.plist
     defaults write /tmp/system.preferences.plist shared -bool false
     security authorizationdb write system.preferences < /tmp/system.preferences.plist
@@ -171,7 +182,7 @@
 
 - name: 5.13 Create a custom message for the Login Screen
   tags: level_1
-  command: defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "Access to this system is reserved for authorized use only. The use of this system may be monitored."
+  shell: defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "Access to this system is reserved for authorized use only. The use of this system may be monitored."
   # This should be modified per organzational standards
 
 - name: 5.14 Create a Login window banner
@@ -182,11 +193,11 @@
 - name: 5.15 Do not enter a password-related hint
   tags: level_1
   command: dscl . -delete /Users/"{{ item }}" hint
-  with_items: "{{ local_users.stdout_lines }}"
+  loop: "{{ local_users }}"
 
 - name: 5.16 Disable Fast User Switching
   tags: level_2
-  command: defaults write /Library/Preferences/.GlobalPreferences MultipleSessionEnabled -bool false
+  shell: defaults write /Library/Preferences/.GlobalPreferences MultipleSessionEnabled -bool false
 
 # 5.17 TBD
 
@@ -200,4 +211,4 @@
 
 - name: 5.20 Enable Library Validation
   tags: level_1
-  command: defaults write /Library/Preferences/com.apple.security.libraryvalidation.plist DisableLibraryValidation DisableLibraryValidation -bool false
+  shell: defaults write /Library/Preferences/com.apple.security.libraryvalidation.plist DisableLibraryValidation DisableLibraryValidation -bool false

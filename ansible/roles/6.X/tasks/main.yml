@@ -5,20 +5,20 @@
 
 - name: 6.1.1 Display login window as name and password
   tags: level_1
-  command: defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME -bool true
+  shell: defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME -bool true
   # Note GUI will not display the updated setting until the current user(s) logs out. 
 
 - name: 6.1.2 Disable "Show password hints" 
   tags: level_1
-  command: defaults write /Library/Preferences/com.apple.loginwindow RetriesUntilHint -int 0
+  shell: defaults write /Library/Preferences/com.apple.loginwindow RetriesUntilHint -int 0
 
 - name: 6.1.3 Disable guest account login 
   tags: level_1
-  command: defaults write /Library/Preferences/com.apple.loginwindow GuestEnabled -bool false
+  shell: defaults write /Library/Preferences/com.apple.loginwindow GuestEnabled -bool false
 
 - name: 6.1.4 Disable "Allow guests to connect to shared folders"
   tags: level_1
-  command: |
+  shell: |
     defaults write /Library/Preferences/com.apple.AppleFileServer guestAccess -bool false
     defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server AllowGuestAccess -bool false
 
@@ -28,14 +28,14 @@
 
 - name: 6.2 Turn on filename extensions 
   tags: level_1 
-  command: |
+  shell: |
       su "{{ item }}" 
       defaults write /Users/$user/Library/Preferences/.GlobalPreferences.plist AppleShowAllExtensions -bool true 
   with_items: "{{ local_users.stdout_lines}}"
 
 - name: 6.3 Disable the automatic run of safe files in Safari 
   tags: level_1
-  command: |
+  shell: |
       su "{{ item }}"
       defaults write /Users/$user/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari AutoOpenSafeDownloads -bool false
   with_items: "{{ local_users.stdout_lines}}"

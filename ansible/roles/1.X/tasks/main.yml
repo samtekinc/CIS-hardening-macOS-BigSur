@@ -2,22 +2,22 @@
   command: softwareupdate -i -a
 
 - name: 1.2 Enable Auto Update
-  command: defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
+  shell: defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
 
 - name: 1.3 Enable Download new updates when available
-  command: defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true
+  shell: defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true
 
 - name: 1.4 Enable app update installs 
-  command: defaults write /Library/Preferences/com.apple.commerce AutoUpdate -bool TRUE 
+  shell: defaults write /Library/Preferences/com.apple.commerce AutoUpdate -bool TRUE 
 
 - name: 1.5 Enable system data files and security updates install
-  command: "{{ item }}"
+  shell: "{{ item }}"
   with_items:
     - defaults write /Library/Preferences/com.apple.SoftwareUpdate ConfigDataInstall -bool true 
     - defaults write /Library/Preferences/com.apple.SoftwareUpdate CriticalUpdateInstall -bool true 
     
 - name: 1.6 Enable macOS update installs
-  command: defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates -bool TRUE
+  shell: defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates -bool TRUE
 
 ## 1.7 Computer Name Considerations is to be set to an organization's standards if applicable
 

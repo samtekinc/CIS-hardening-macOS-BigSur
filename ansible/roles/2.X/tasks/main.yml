@@ -118,7 +118,7 @@
 
 - name: "2.4.2 Disable Internet Sharing"
   tags: level_1
-  command: defaults write /Library/Preferences/SystemConfiguration/com.apple.nat NAT -dict Enabled -int 0
+  shell: defaults write /Library/Preferences/SystemConfiguration/com.apple.nat NAT -dict Enabled -int 0
 
 - name: "2.4.3 Disable Screen Sharing"
   tags: level_1
@@ -157,7 +157,7 @@
 
 - name: 2.4.11 Disable Media Sharing
   tags: level_2
-  command: |
+  shell: |
     su "{{ item }}"
     defaults write com.apple.amp.mediasharingd home-sharing-enabled -int 0
   with_items: "{{ local_users.stdout_lines }}"
@@ -180,7 +180,7 @@
 
 - name: "2.5.2.2 Enable Firewall"
   tags: level_1
-  command: defaults write /Library/Preferences/com.apple.alf globalstate -int 2
+  shell: defaults write /Library/Preferences/com.apple.alf globalstate -int 2
 
 - name: "2.5.2.3 Enable Firewall Stealth Mode"
   tags: level_1
@@ -194,7 +194,7 @@
 
 - name: 2.5.5 Disable sending diagnostic and usage data to Apple
   tags: level_2
-  command: |
+  shell: |
     defaults write /Library/Application\ Support/CrashReporter/DiagnosticMessagesHistory.plist AutoSubmit -bool false
     chmod 644 /Library/Application\ Support/CrashReporter/DiagnosticMessagesHistory.plist
     chgrp admin /Library/Application\ Support/CrashReporter/DiagnosticMessagesHistory.plist
@@ -206,7 +206,6 @@
     defaults -currentHost write /Users/$user/Library/Preferences/com.apple.Adlib.plist allowApplePersonalizedAdvertising -bool false
   with_items: "{{ local_users.stdout_lines }}"
 
-<<<<<<< HEAD
 # 2.6.1 iCloud configuration depends upon your organization's policies if applicable
 
 # 2.6.2 iCloud keychain depends upon your organization's policies if applicable
@@ -220,8 +219,6 @@
 
 # 2.7.1 Time Machine Auto-Backup requires specific volume names that can vary across machines in order to function
 
-=======
->>>>>>> main
 - name: "2.8 Disable Wake for network access"
   tags: level_1
   command: pmset -a womp 0
