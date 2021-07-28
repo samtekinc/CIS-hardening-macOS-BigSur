@@ -1,3 +1,8 @@
+- name: Get Users
+  shell: dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root'
+  register: local_users
+
+
 - name: 6.1.1 Display login window as name and password
   tags: level_1
   command: defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME -bool true
@@ -24,18 +29,14 @@
 - name: 6.2 Turn on filename extensions 
   tags: level_1 
   command: |
-    users=$(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root')
-    for user in $users; do 
-      su $user
+      su "{{ item }}" 
       defaults write /Users/$user/Library/Preferences/.GlobalPreferences.plist AppleShowAllExtensions -bool true 
-    done
+  with_items: "{{ local_users.stdout_lines}}"
 
 - name: 6.3 Disable the automatic run of safe files in Safari 
   tags: level_1
   command: |
-    users=$(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root')
-    for user in $users; do 
-      su $user
+      su "{{ item }}"
       defaults write /Users/$user/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari AutoOpenSafeDownloads -bool false
-    done
+  with_items: "{{ local_users.stdout_lines}}"
 

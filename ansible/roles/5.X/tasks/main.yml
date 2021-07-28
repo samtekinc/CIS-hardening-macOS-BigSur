@@ -2,6 +2,18 @@
   shell: dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root'
   register: local_users
 
+- name: System Wide Applications
+  shell: find /Applications -iname "*\.app" -type d -perm -2
+  register: sys_wide_apps
+
+- name: System World Writeable Files
+  shell: find /System -type d -perm -2 | grep -v "Public/Drop Box"
+  register: sww_files
+
+- name: Library World Writable Files
+  shell: find /Library -type d -perm -2 | grep -v Caches | grep -v Audio
+  register: lww_files
+
 # 5.1
 
 - name: 5.1.1 Secure Home Folders
@@ -16,19 +28,21 @@
 
 - name: 5.1.2 Check System Wide Applications for appropriate permissions
   tags: level_1
-  command: |
-    IFS=$'\n'
-    for app in $( find /Applications -iname "*\.app" -type d -perm -2 ); do
-      chmod -R o-w "$app"
-    done
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: o-w
+    state: directory
+    recurse: yes
+  with_items: "{{ sys_wide_apps.stdout_lines }}"
 
 - name: 5.1.3 Check System folder for world writable files
   tags: level_1
-  command: |
-    IFS=$'\n'
-    for directory in $( find /System -type d -perm -2 | grep -v "Public/Drop Box" ); do
-      chmod -R o-w "$directory"
-    done
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: o-w
+    state: directory
+    recurse: yes
+  with_items: "{{ sww_files.stdout_lines }}"
 
 - name: 5.1.4 Check Library folder for world writable files
   tags: level_2
@@ -51,49 +65,43 @@
 - name: 5.2.3 Complex passwords must contain an Alphabetic Character
   tags: level_2
   command: |
-    if [[ $(pwpolicy -getaccountpolicies | grep -A1 minimumLetters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1 ]]; then
-      pwpolicy -n /Local/Default -setglobalpolicy "requiresAlpha=1"
-    fi
+    pwpolicy -n /Local/Default -setglobalpolicy "requiresAlpha=1"
+  when: pwpolicy -getaccountpolicies | grep -A1 minimumLetters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1
   # Only change if the output is less than 1. If greater, do not reduce to 1. This should be modified to organizational threshold
 
 - name: 5.2.4 Complex passwords must contain a Numeric Character
   tags: level_2
   command: |
-    if [[ $(pwpolicy -getaccountpolicies | grep -A1 minimumNumericCharacters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1 ]]; then
-      pwpolicy -n /Local/Default -setglobalpolicy "requiresNumeric=1"
-    fi
+    pwpolicy -n /Local/Default -setglobalpolicy "requiresNumeric=1"
+  when: pwpolicy -getaccountpolicies | grep -A1 minimumNumericCharacters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1
   # Only change if the output is less than 1. If greater, do not reduce to 1. This should be modified to organizational threshold
 
 - name: 5.2.5 Complex passwords must contain a Special Character
   tags: level_2
   command: |
-    if [[ $(pwpolicy -getaccountpolicies | grep -A1 minimumSymbols | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1 ]]; then
-      pwpolicy -n /Local/Default -setglobalpolicy "requiresSymbol=1"
-    fi
+    pwpolicy -n /Local/Default -setglobalpolicy "requiresSymbol=1"
+  when: pwpolicy -getaccountpolicies | grep -A1 minimumSymbols | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1 
   # Only change if the output is less than 1. If greater, do not reduce to 1. This should be modified to organizational threshold
 
 - name: 5.2.6 Complex passwords must [contain] uppercase and lowercase letters
   tags: level_2
   command: |
-    if [[ $(pwpolicy -getaccountpolicies | grep -A1 minimumMixedCaseCharacters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1 ]]; then
-      pwpolicy -n /Local/Default -setglobalpolicy "requiresMixedCase=1"
-    fi
+    pwpolicy -n /Local/Default -setglobalpolicy "requiresMixedCase=1"
+  when: pwpolicy -getaccountpolicies | grep -A1 minimumMixedCaseCharacters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1 
   # Only change if the output is less than 1. If greater, do not reduce to 1. This should be modified to organizational threshold
 
 - name: 5.2.7 Password Age
   tags: level_1
   command: |
-    if [[ $(pwpolicy -getaccountpolicies | grep -A1 policyAttributeDaysUntilExpiration | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) > 365 ]]; then
       pwpolicy -n /Local/Default -setglobalpolicy "maxMinutesUntilChangePassword=525600"
-    fi
+  when: pwpolicy -getaccountpolicies | grep -A1 policyAttributeDaysUntilExpiration | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) > 365 
   # Only change if the output is greater than 365 days. If less, do not increase to 365. This should be modified to organizational threshold
 
 - name: 5.2.8 Password History
   tags: level_1
   command: |
-    if [[ $(pwpolicy -getaccountpolicies | grep -A1 policyAttributePasswordHistoryDepth | tail -1 | cut -d'>' -f2 | cut -d '<' - f1) < 15 ]]; then
-      pwpolicy -n /Local/Default -setglobalpolicy "usingHistory=15"
-    fi
+    pwpolicy -n /Local/Default -setglobalpolicy "usingHistory=15"
+  when: pwpolicy -getaccountpolicies | grep -A1 policyAttributePasswordHistoryDepth | tail -1 | cut -d'>' -f2 | cut -d '<' - f1) < 15 
   # Only change if the output is less than 15 password entries. If greater, do not reduce to 15. This should be modified to organizational threshold
 
 - name: 5.3 Reduce the sudo timeout period

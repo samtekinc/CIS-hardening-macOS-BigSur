@@ -1,3 +1,7 @@
+- name: Get Users
+  shell: dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root'
+  register: local_users
+
 - name: 4.1 Disable Bonjour advertising service 
   tags: level_2
   command: defaults write /Library/Preferences/com.apple.mDNSResponder.plist NoMulticastAdvertisements -bool true
@@ -5,11 +9,10 @@
 - name: 4.2 Enable "Show Wi-Fi status in menu bar"
   tags: level_1
   command: | 
-    users=$(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root')
-    for user in $users; do 
-      su $user
+      su "{{ item }}"
       defaults -currentHost write com.apple.controlcenter.plist WiFi -int 18 
-    done 
+  with_items: "{{ local_users.stdout_lines}}"
+  
 
 # 4.3 Create network specific locations involves the removal and creation of any Network locations present on a mac machine, this can vary with your organization and cannot be automated. 
 
@@ -25,4 +28,5 @@
     rm /etc/exports
 
 # 4.6 Review Wi-Fi Settings requires specific network device numbers and the option of on and off depends on your organization and cannot be automated.
+
 
