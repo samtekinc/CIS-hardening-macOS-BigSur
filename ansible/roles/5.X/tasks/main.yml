@@ -45,14 +45,14 @@
     recurse: yes
   with_items: "{{ sww_files.stdout_lines }}"
 
-- name: 5.1.4 Check Library folder for world writable files
-  tags: level_2
-  ansible.builtin.file:
-    path: "{{ item }}"
-    mode: o-w
-    state: directory
-    recurse: yes
-  with_items: "{{ lww_files.stdout_lines }}"
+#- name: 5.1.4 Check Library folder for world writable files
+#  tags: level_2
+#  ansible.builtin.file:
+#    path: "{{ item }}"
+#    mode: o-w
+#    state: directory
+#    recurse: yes
+#  with_items: "{{ lww_files.stdout_lines }}"
 
 # 5.2
 

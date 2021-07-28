@@ -6,37 +6,33 @@
   shell: defaults read /Library/Preferences/com.apple.Bluetooth ControllerPowerState
   register: bt_power
 
-<<<<<<< HEAD
 #This check may be incorrect: https://workbench.cisecurity.org/tickets/13360?status=1
-=======
->>>>>>> main
 - name: Bluetooth Paired Devices
   shell: system_profiler SPBluetoothDataType | grep "Bluetooth:" -A 20 | grep Connectable
   register: bt_datatype
 
-<<<<<<< HEAD
 - name: FileVault Status
   shell: fdesetup status
   register: filevault_status
 
-- name: 2.1.1 Turn off Bluetooth, if no paired devices exist
-  shell: defaults write /Library/Preferences/com.apple.Bluetooth ControllerPowerstate -int 0 & killall -HUP blued
-  when: bt_power.stdout|int == 1 and bt_datatype.stdout == "Connectable{{':'}} No."
-=======
 - name: Top Left Corner Value
   shell: defaults read com.apple.dock wvous-tl-corner
-  register: cornerone 
+  ignore_errors: yes
+  register: cornerone
 
 - name: Bottom Left Corner Value
   shell: defaults read com.apple.dock wvous-bl-corner
+  ignore_errors: yes
   register: cornertwo
 
 - name: Top Right Corner Value
   shell: defaults read com.apple.dock wvous-tr-corner
+  ignore_errors: yes
   register: cornerthree
 
 - name: Bottom Right Corner Value
   shell: defaults read com.apple.dock wvous-br-corner
+  ignore_errors: yes
   register: cornerfour
 
 - name: Fix Top Left Corner
@@ -55,9 +51,9 @@
   shell: defaults write com.apple.dock wvous-br-corner -int 10
   register: cornerfourfix
 
-- name: Check for FileVault Status
-  command: fdesetup status 
-  register: filevault_status
+- name: 2.1.1 Turn off Bluetooth, if no paired devices exist
+  shell: defaults write /Library/Preferences/com.apple.Bluetooth ControllerPowerstate -int 0 & killall -HUP blued
+  when: bt_power.stdout|int == 1 and bt_datatype.stdout == "Connectable{{':'}} No."
 
 - name: 2.1.2 Show Bluetooth status in menu bar 
   tags: level_1
@@ -65,7 +61,6 @@
     su "{{ item }}"
     defaults -currentHost write com.apple.controlcenter.plist Bluetooth -int 18
   with_items: "{{ local_users.stdout_lines }}"
->>>>>>> main
 
 - name: "2.2.1 Enable Set time and date automatically"
   tags: level_1
@@ -79,15 +74,6 @@
   command: systemsetup -getnetworktimeserver
 
 - name: "2.3.1 Set an inactivity interval of 20 minutes or less for the screen saver"
-<<<<<<< HEAD
-  shell: |
-    su "{{ item }}"
-    defaults -currentHost write com.apple.screensaver idleTime -int 1200
-  with_items: "{{ local_users.stdout_lines }}"
-
-#- name: "2.4.1 Disable Remote Apple Events" #Potential issue with Full Disk Access here: https://support.apple.com/en-us/HT210595
-#  command: systemsetup -setremoteappleevents off
-=======
   tags: level_1
   shell: |
     su "{{ item }}"
@@ -100,7 +86,7 @@
     su "{{ item }}" 
     corneronefix
   with_items: "{{ local_users.stdout_lines}}"
-  when: cornerone == 6
+  when: cornerone|int == 6 or cornerone.rc == 1
 
 - name: 2.3.2 Secure screen saver corners (Bottom Left)
   tags: level_2
@@ -108,7 +94,7 @@
     su "{{ item }}"
     cornertwofix
   with_items: "{{ local_users.stdout_lines}}"
-  when: cornertwo == 6
+  when: cornertwo|int == 6 or cornertwo.rc == 1
 
 - name: 2.3.2 Secure screen saver corners (Top Right)
   tags: level_2
@@ -116,7 +102,7 @@
     su "{{ item }}"
     cornerthreefix
   with_items: "{{ local_users.stdout_lines}}"
-  when: cornerthree == 6
+  when: cornerthree|int == 6 or cornerthree.rc == 1
 
 - name: 2.3.2 Secure screen saver corners (Bottom Right)
   tags: level_2
@@ -124,12 +110,11 @@
     su "{{ item }}"
     cornerfourfix
   with_items: "{{ local_users.stdout_lines}}"
-  when: cornerfour == 6
+  when: cornerfour|int == 6 or cornerfour.rc == 1
 
 - name: "2.4.1 Disable Removte Apple Events"
   tags: level_1
   command: systemsetup -setremoteappleevents off
->>>>>>> main
 
 - name: "2.4.2 Disable Internet Sharing"
   tags: level_1
@@ -143,27 +128,13 @@
   tags: level_1
   command: cupsctl --no-share-printers
 
-<<<<<<< HEAD
-#- name: "2.4.5 Disable Remote Login" #Gotta figure this out
-#  debugger: always
-#  expect:
-#    command: systemsetup -setremotelogin off
-#    echo: yes
-#    responses:
-#      Do: yes
-=======
-- name: "2.4.5 Disable Remote Login"
-  tags: level_1
-  command: yes | systemsetup -setremotelogin off
->>>>>>> main
+#- name: "2.4.5 Disable Remote Login"
+#  tags: level_1
+#  command: yes | systemsetup -setremotelogin off
 
 - name: "2.4.6 Disable DVD or CD Sharing"
-<<<<<<< HEAD
-  command: launchctl disable system/com.apple.ODSAgent
-=======
   tags: level_1
-  command: launcherctl disable system/com.apple.ODSAgent
->>>>>>> main
+  command: launchctl disable system/com.apple.ODSAgent
 
 - name: 2.4.7 Disable Bluetooth Sharing
   tags: level_1
@@ -173,17 +144,11 @@
   with_items: "{{ local_users.stdout_lines}}"
 
 - name: "2.4.8 Disable File Sharing"
-<<<<<<< HEAD
+  tags: level_1
   command: launchctl unload -w /System/Library/LaunchDaemons/com.apple.smbd.plist
 
 - name: "2.4.9 Disable Remote Management"
-=======
   tags: level_1
-  command: launcherctl unload -w /System/Library/LaunchDaemons/com.apple.smbd.plist
-
-- name: "2.4.9 Disable Remote Management"
-  tags: level_1
->>>>>>> main
   command: /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate -stop 
 
 - name: "2.4.12 Ensure AirDrop is Disabled"
@@ -193,20 +158,10 @@
     defaults write com.apple.NetworkBrowser DisableAirDrop -bool true
   with_items: "{{ local_users.stdout_lines }}"
 
-<<<<<<< HEAD
-#- name: "2.5.1.1 Enable FileVault"
-#  command: fdesetup enable
-#  when: filevault_status.stdout == "FileVault is Off."
-#Unable to do without credentials being passed
-
-##- name: "2.5.1.2 Ensure all user storage APFS volumes are encrypted"
-## 2.5.1.3 Ensure all user storage CoreStorage volumes are encrypted 
-=======
 - name: "2.5.1.1 Enable FileVault"
   tags: level_1
   command: fdsetup enable
   when: filevault_status.stdout == "FileVault is Off." 
->>>>>>> main
 
 - name: "2.5.2.1 Enable Gatekeeper"
   tags: level_1
@@ -227,7 +182,6 @@
     defaults -currentHost write /Users/$user/Library/Preferences/com.apple.Adlib.plist allowApplePersonalizedAdvertising -bool false
   with_items: "{{ local_users.stdout_lines }}"
 
-
 - name: "2.8 Disable Wake for network access"
   tags: level_1
   command: pmset -a womp 0
@@ -236,8 +190,6 @@
   tags: level_1
   command: pmset -a powernap 0 
 
-<<<<<<< HEAD
-=======
 - name: 2.10 Enable Secure Keyboard Entry in terminal.app
   tags: level_1
   shell: |
@@ -245,7 +197,6 @@
     defaults write -app Terminal SecureKeyboardEntry -bool true
   with_items: "{{ local_users.stdout_lines }}"
 
->>>>>>> main
 - name: 2.12 Automatic Actions for Optical Media 
   tags: level_1
   shell: |
@@ -253,11 +204,7 @@
     defaults write /Users/$user/Library/Preferences/com.apple.digihub "{{ item.1 }}" -dict action 1
   with_nested:
     - "{{ local_users.stdout_lines }}"
-<<<<<<< HEAD
     - ["com.apple.digihub.blank.cd.appeared", "com.apple.digihub.blank.dvd.appeared", "com.apple.digihub.cd.music.appeared", "com.apple.digihub.cd.picture.appeared", "com.apple.digihub.dvd.video.appeared"]
-=======
-    - ["com.apple.digihub.blank.cd.appeared", "com.apple.digihub.blank.dvd.appeared", "com.apple.digihub.cd.music.appeared", "com.apple.digihub.cd.picture.appeared", "com.apple.digihub.dvd.video.appeared"]
-
 
 - name: 2.13 Review Siri Settings
   tags: level_1
@@ -270,4 +217,3 @@
     killall -HUP cfprefsd
     killall SystemUIServer
   with_items: "{{ local_users.stdout_lines }}"
->>>>>>> main
