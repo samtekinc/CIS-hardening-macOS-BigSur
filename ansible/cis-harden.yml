@@ -1,13 +1,18 @@
 - hosts: localhost
   connection: local
   tasks:
-  - debug: 
-      msg: Check we are running in the directory of the script
-    failed_when: not ansible_env.PWD.endswith('/ansible')
+    - debug:
+        msg: Check we are running in the directory of the script
+      failed_when: not ansible_env.PWD.endswith('/ansible')
+    - name: Set BASH as the default shell
+      shell: chsh -s $(which bash) {{ lookup('env', 'USER') }}
+      become: true
+
+
 - hosts: localhost
   connection: local
   roles:
-    - 1.X    
+    - 1.X
     - 2.X
     - 3.X
     - 4.X

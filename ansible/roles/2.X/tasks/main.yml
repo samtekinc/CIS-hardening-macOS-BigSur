@@ -6,24 +6,33 @@
   shell: defaults read /Library/Preferences/com.apple.Bluetooth ControllerPowerState
   register: bt_power
 
+#This check will be updated in v1.3.0. See: https://workbench.cisecurity.org/tickets/13360
 - name: Bluetooth Paired Devices
   shell: system_profiler SPBluetoothDataType | grep "Bluetooth:" -A 20 | grep Connectable
   register: bt_datatype
 
+- name: FileVault Status
+  shell: fdesetup status
+  register: filevault_status
+
 - name: Top Left Corner Value
   shell: defaults read com.apple.dock wvous-tl-corner
-  register: cornerone 
+  ignore_errors: yes
+  register: cornerone
 
 - name: Bottom Left Corner Value
   shell: defaults read com.apple.dock wvous-bl-corner
+  ignore_errors: yes
   register: cornertwo
 
 - name: Top Right Corner Value
   shell: defaults read com.apple.dock wvous-tr-corner
+  ignore_errors: yes
   register: cornerthree
 
 - name: Bottom Right Corner Value
   shell: defaults read com.apple.dock wvous-br-corner
+  ignore_errors: yes
   register: cornerfour
 
 - name: Fix Top Left Corner
@@ -42,9 +51,9 @@
   shell: defaults write com.apple.dock wvous-br-corner -int 10
   register: cornerfourfix
 
-- name: Check for FileVault Status
-  command: fdesetup status 
-  register: filevault_status
+- name: 2.1.1 Turn off Bluetooth, if no paired devices exist
+  shell: defaults write /Library/Preferences/com.apple.Bluetooth ControllerPowerstate -int 0 & killall -HUP blued
+  when: bt_power.stdout|int == 1 and bt_datatype.stdout == "Connectable{{':'}} No."
 
 - name: 2.1.2 Show Bluetooth status in menu bar 
   tags: level_1
@@ -77,7 +86,7 @@
     su "{{ item }}" 
     corneronefix
   with_items: "{{ local_users.stdout_lines}}"
-  when: cornerone == 6
+  when: cornerone|int == 6 or cornerone.rc == 1
 
 - name: 2.3.2 Secure screen saver corners (Bottom Left)
   tags: level_2
@@ -85,7 +94,7 @@
     su "{{ item }}"
     cornertwofix
   with_items: "{{ local_users.stdout_lines}}"
-  when: cornertwo == 6
+  when: cornertwo|int == 6 or cornertwo.rc == 1
 
 - name: 2.3.2 Secure screen saver corners (Top Right)
   tags: level_2
@@ -93,7 +102,7 @@
     su "{{ item }}"
     cornerthreefix
   with_items: "{{ local_users.stdout_lines}}"
-  when: cornerthree == 6
+  when: cornerthree|int == 6 or cornerthree.rc == 1
 
 - name: 2.3.2 Secure screen saver corners (Bottom Right)
   tags: level_2
@@ -101,7 +110,7 @@
     su "{{ item }}"
     cornerfourfix
   with_items: "{{ local_users.stdout_lines}}"
-  when: cornerfour == 6
+  when: cornerfour|int == 6 or cornerfour.rc == 1
 
 - name: "2.4.1 Disable Removte Apple Events"
   tags: level_1
@@ -119,13 +128,13 @@
   tags: level_1
   command: cupsctl --no-share-printers
 
-- name: "2.4.5 Disable Remote Login"
-  tags: level_1
-  command: yes | systemsetup -setremotelogin off
+#- name: "2.4.5 Disable Remote Login"
+#  tags: level_1
+#  command: yes | systemsetup -setremotelogin off
 
 - name: "2.4.6 Disable DVD or CD Sharing"
   tags: level_1
-  command: launcherctl disable system/com.apple.ODSAgent
+  command: launchctl disable system/com.apple.ODSAgent
 
 - name: 2.4.7 Disable Bluetooth Sharing
   tags: level_1
@@ -136,7 +145,7 @@
 
 - name: "2.4.8 Disable File Sharing"
   tags: level_1
-  command: launcherctl unload -w /System/Library/LaunchDaemons/com.apple.smbd.plist
+  command: launchctl unload -w /System/Library/LaunchDaemons/com.apple.smbd.plist
 
 - name: "2.4.9 Disable Remote Management"
   tags: level_1
@@ -173,7 +182,6 @@
     defaults -currentHost write /Users/$user/Library/Preferences/com.apple.Adlib.plist allowApplePersonalizedAdvertising -bool false
   with_items: "{{ local_users.stdout_lines }}"
 
-
 - name: "2.8 Disable Wake for network access"
   tags: level_1
   command: pmset -a womp 0
@@ -197,7 +205,6 @@
   with_nested:
     - "{{ local_users.stdout_lines }}"
     - ["com.apple.digihub.blank.cd.appeared", "com.apple.digihub.blank.dvd.appeared", "com.apple.digihub.cd.music.appeared", "com.apple.digihub.cd.picture.appeared", "com.apple.digihub.dvd.video.appeared"]
-
 
 - name: 2.13 Review Siri Settings
   tags: level_1
