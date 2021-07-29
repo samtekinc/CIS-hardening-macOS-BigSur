@@ -14,6 +14,30 @@
   shell: find /Library -type d -perm -2 | grep -v Caches | grep -v Audio
   register: lww_files
 
+- name: Password Policy Min Letters
+  shell: pwpolicy -getaccountpolicies | grep -A1 minimumLetters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1
+  register: pp_min_alpha
+
+- name: Password Policy Min Numbers
+  shell: pwpolicy -getaccountpolicies | grep -A1 minimumNumericCharacters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1
+  register: pp_min_number
+
+- name: Password Policy Min Symbols
+  shell: pwpolicy -getaccountpolicies | grep -A1 minimumSymbols | tail -1 | cut -d'>' -f2 | cut -d '<' -f1
+  register: pp_min_symbol
+
+- name: Password Policy Mixed Characters
+  shell: pwpolicy -getaccountpolicies | grep -A1 minimumMixedCaseCharacters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1
+  register: pp_mixed_char
+
+- name: Password Policy Age
+  shell: pwpolicy -getaccountpolicies | grep -A1 policyAttributeDaysUntilExpiration | tail -1 | cut -d'>' -f2 | cut -d '<' -f1
+  register: pp_age
+
+- name: Password Policy History
+  shell: pwpolicy -getaccountpolicies | grep -A1 policyAttributePasswordHistoryDepth | tail -1 | cut -d'>' -f2 | cut -d '<' - f1
+  register: pp_history
+
 # 5.1
 
 - name: 5.1.1 Secure Home Folders
@@ -25,7 +49,6 @@
     state: directory
     recurse: yes
   with_items: "{{ local_users.stdout_lines }}"
-  
 
 - name: 5.1.2 Check System Wide Applications for appropriate permissions
   tags: level_1
@@ -67,54 +90,48 @@
 - name: 5.2.3 Complex passwords must contain an Alphabetic Character
   tags: level_2
   command: |
-    if [[ $(pwpolicy -getaccountpolicies | grep -A1 minimumLetters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1 ]]; then
-      pwpolicy -n /Local/Default -setglobalpolicy "requiresAlpha=1"
-    fi
+    pwpolicy -n /Local/Default -setglobalpolicy "requiresAlpha=1"
+  when: pp_min_alpha.stdout|int < 1
   # Only change if the output is less than 1. If greater, do not reduce to 1. This should be modified to organizational threshold
 
 - name: 5.2.4 Complex passwords must contain a Numeric Character
   tags: level_2
-  command: |
-    if [[ $(pwpolicy -getaccountpolicies | grep -A1 minimumNumericCharacters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1 ]]; then
-      pwpolicy -n /Local/Default -setglobalpolicy "requiresNumeric=1"
-    fi
+  command: pwpolicy -n /Local/Default -setglobalpolicy "requiresNumeric=1"
+  when: pp_min_number.stdout|int < 1
   # Only change if the output is less than 1. If greater, do not reduce to 1. This should be modified to organizational threshold
 
 - name: 5.2.5 Complex passwords must contain a Special Character
   tags: level_2
-  command: |
-    if [[ $(pwpolicy -getaccountpolicies | grep -A1 minimumSymbols | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1 ]]; then
-      pwpolicy -n /Local/Default -setglobalpolicy "requiresSymbol=1"
-    fi
+  command: pwpolicy -n /Local/Default -setglobalpolicy "requiresSymbol=1"
+  when: pp_min_symbol.stdout|int < 1 
   # Only change if the output is less than 1. If greater, do not reduce to 1. This should be modified to organizational threshold
 
 - name: 5.2.6 Complex passwords must [contain] uppercase and lowercase letters
   tags: level_2
-  command: |
-    if [[ $(pwpolicy -getaccountpolicies | grep -A1 minimumMixedCaseCharacters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1 ]]; then
-      pwpolicy -n /Local/Default -setglobalpolicy "requiresMixedCase=1"
-    fi
+  command: pwpolicy -n /Local/Default -setglobalpolicy "requiresMixedCase=1"
+  when: pp_mixed_char.stdout|int < 1 
   # Only change if the output is less than 1. If greater, do not reduce to 1. This should be modified to organizational threshold
 
 - name: 5.2.7 Password Age
   tags: level_1
-  command: |
-    if [[ $(pwpolicy -getaccountpolicies | grep -A1 policyAttributeDaysUntilExpiration | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) > 365 ]]; then
-      pwpolicy -n /Local/Default -setglobalpolicy "maxMinutesUntilChangePassword=525600"
-    fi
+  command: pwpolicy -n /Local/Default -setglobalpolicy "maxMinutesUntilChangePassword=525600"
+  when: pp_age.stdout|int > 365 
   # Only change if the output is greater than 365 days. If less, do not increase to 365. This should be modified to organizational threshold
 
 - name: 5.2.8 Password History
   tags: level_1
-  command: |
-    if [[ $(pwpolicy -getaccountpolicies | grep -A1 policyAttributePasswordHistoryDepth | tail -1 | cut -d'>' -f2 | cut -d '<' - f1) < 15 ]]; then
-      pwpolicy -n /Local/Default -setglobalpolicy "usingHistory=15"
-    fi
+  command: pwpolicy -n /Local/Default -setglobalpolicy "usingHistory=15"
+  when: pp_history.stdout|int < 15 
   # Only change if the output is less than 15 password entries. If greater, do not reduce to 15. This should be modified to organizational threshold
 
 - name: 5.3 Reduce the sudo timeout period
   tags: level_1
-  command: echo "Defaults timestamp_timeout=0" >> /etc/sudoers
+  ansible.builtin.lineinfile: 
+    path: /etc/sudoers
+    regexp: 'Defaults timestamp_timeout='
+    line: "Defaults timestamp_timeout=0"
+    backup: yes
+    validate: /usr/sbin/visudo -cf %s
 
 - name: 5.4 Automatically lock the login keychain for inactivity
   tags: level_2
@@ -124,12 +141,39 @@
   with_items: "{{ local_users.stdout_lines }}"
   # This should be modified to organizational threshold
 
-- name: 5.5 Use a separate timestamp for each user/tty combo
+- name: 5.5 Use a separate timestamp for each user/tty combo (1)
   tags: level_1
-  command: |
-    sed -i ".old" '/Default !tty_tickets/d' /etc/sudoers
-    chmod 644 /etc/sudoers
-    chown root:wheel /etc/sudoers
+  ansible.builtin.replace:
+    path: /etc/sudoers
+    regexp: "Defaults !tty_tickets"
+    replace: "Defaults"
+    backup: yes
+    validate: /usr/sbin/visudo -cf %s
+
+- name: 5.5 Use a separate timestamp for each user/tty combo (2)
+  tags: level_1
+  ansible.builtin.replace:
+    path: /etc/sudoers
+    regexp: "(Defaults timestamp_type=)\w+"
+    replace: "Defaults timestamp_type=tty"
+    backup: yes
+    validate: /usr/sbin/visudo -cf %s
+
+- name: 5.5 Use a separate timestamp for each user/tty combo (3)
+  tags: level_1
+  ansible.builtin.replace:
+    path: /etc/sudoers.d
+    regexp: "Defaults !tty_tickets"
+    replace: "Defaults"
+    backup: yes
+
+- name: 5.5 Use a separate timestamp for each user/tty combo (4)
+  tags: level_1
+  ansible.builtin.replace:
+    path: /etc/sudoers.d
+    regexp: "(Defaults timestamp_type=)\w+"
+    replace: "Defaults timestamp_type=tty"
+    backup: yes
 
 - name: 5.6 Ensure login keychain is locked when the computer sleeps
   tags: level_2
@@ -144,11 +188,11 @@
 
 - name: 5.8 Disable automatic login
   tags: level_1
-  command: defaults delete /Library/Preferences/com.apple.loginwindow autoLoginUser
+  shell: defaults delete /Library/Preferences/com.apple.loginwindow autoLoginUser
 
 - name: 5.9 Require a password to wake the computer from sleep or screen saver
   tags: level_1
-  command: |
+  shell: |
     su "{{ item }}"
     defaults write /Users/"{{ item }}"/Library/Preferences/com.apple.screensaver askForPassword -int 1
   with_items: "{{ local_users.stdout_lines }}"
@@ -165,7 +209,7 @@
 
 - name: 5.11 Require an administrator password to access system-wide preferences
   tags: level_1
-  command: |
+  shell: |
     security authorizationdb read system.preferences > /tmp/system.preferences.plist
     defaults write /tmp/system.preferences.plist shared -bool false
     security authorizationdb write system.preferences < /tmp/system.preferences.plist
@@ -177,7 +221,7 @@
 
 - name: 5.13 Create a custom message for the Login Screen
   tags: level_1
-  command: defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "Access to this system is reserved for authorized use only. The use of this system may be monitored."
+  shell: defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "Access to this system is reserved for authorized use only. The use of this system may be monitored."
   # This should be modified per organzational standards
 
 - name: 5.14 Create a Login window banner
@@ -192,7 +236,7 @@
 
 - name: 5.16 Disable Fast User Switching
   tags: level_2
-  command: defaults write /Library/Preferences/.GlobalPreferences MultipleSessionEnabled -bool false
+  shell: defaults write /Library/Preferences/.GlobalPreferences MultipleSessionEnabled -bool false
 
 # 5.17 TBD
 
@@ -206,4 +250,4 @@
 
 - name: 5.20 Enable Library Validation
   tags: level_1
-  command: defaults write /Library/Preferences/com.apple.security.libraryvalidation.plist DisableLibraryValidation DisableLibraryValidation -bool false
+  shell: defaults write /Library/Preferences/com.apple.security.libraryvalidation.plist DisableLibraryValidation DisableLibraryValidation -bool false
