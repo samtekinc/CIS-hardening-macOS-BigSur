@@ -7,10 +7,17 @@
     - name: Set BASH as the default shell
       shell: chsh -s $(which bash) {{ lookup('env', 'USER') }}
       become: true
+    - name: Get Users
+      shell: dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root'
+      register: local_users
+    - name: Users
+      set_fact: users="{{ local_users.stdout_lines }}"
 
 
 - hosts: localhost
   connection: local
+  vars_files:
+    - vars/org.yml
   roles:
     - 1.X
     - 2.X

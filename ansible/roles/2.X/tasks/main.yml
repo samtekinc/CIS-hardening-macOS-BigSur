@@ -1,7 +1,3 @@
-- name: Get Users
-  shell: dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root'
-  register: local_users
-
 - name: Bluetooth Power state
   shell: defaults read /Library/Preferences/com.apple.Bluetooth ControllerPowerState
   register: bt_power
@@ -60,7 +56,7 @@
   shell: |
     su "{{ item }}"
     defaults -currentHost write com.apple.controlcenter.plist Bluetooth -int 18
-  with_items: "{{ local_users.stdout_lines }}"
+  with_items: "{{ users }}"
 
 - name: "2.2.1 Enable Set time and date automatically"
   tags: level_1
@@ -78,14 +74,14 @@
   shell: |
     su "{{ item }}"
     defaults -currentHost write com.apple.screensaver idleTime -int 1200
-  with_items: "{{ local_users.stdout_lines}}"
+  with_items: "{{ users }}"
 
 - name: 2.3.2 Secure screen saver corners (Top Left) 
   tags: level_2
   shell: | 
     su "{{ item }}" 
     corneronefix
-  with_items: "{{ local_users.stdout_lines}}"
+  with_items: "{{ users }}"
   when: cornerone|int == 6 or cornerone.rc == 1
 
 - name: 2.3.2 Secure screen saver corners (Bottom Left)
@@ -93,7 +89,7 @@
   shell: |
     su "{{ item }}"
     cornertwofix
-  with_items: "{{ local_users.stdout_lines}}"
+  with_items: "{{ users }}"
   when: cornertwo|int == 6 or cornertwo.rc == 1
 
 - name: 2.3.2 Secure screen saver corners (Top Right)
@@ -101,7 +97,7 @@
   shell: |
     su "{{ item }}"
     cornerthreefix
-  with_items: "{{ local_users.stdout_lines}}"
+  with_items: "{{ users }}"
   when: cornerthree|int == 6 or cornerthree.rc == 1
 
 - name: 2.3.2 Secure screen saver corners (Bottom Right)
@@ -109,7 +105,7 @@
   shell: |
     su "{{ item }}"
     cornerfourfix
-  with_items: "{{ local_users.stdout_lines}}"
+  with_items: "{{ users }}"
   when: cornerfour|int == 6 or cornerfour.rc == 1
 
 - name: "2.4.1 Disable Removte Apple Events"
@@ -141,7 +137,7 @@
   shell: |
     su "{{ item }}"
     defaults -currentHost write com.apple.Bluetooth PrefKeyServicesEnabled -bool false
-  with_items: "{{ local_users.stdout_lines}}"
+  with_items: "{{ users }}"
 
 - name: "2.4.8 Disable File Sharing"
   tags: level_1
@@ -154,6 +150,7 @@
 - name: 2.4.10 Disable Content Caching 
   tags: level_2
   command: AssetCacheManagerUtil deactivate
+  ignore_errors: yes
 
 - name: 2.4.11 Disable Media Sharing
   tags: level_2
@@ -168,11 +165,6 @@
     su "{{ item }}"
     defaults write com.apple.NetworkBrowser DisableAirDrop -bool true
   with_items: "{{ local_users.stdout_lines }}"
-
-- name: "2.5.1.1 Enable FileVault"
-  tags: level_1
-  command: fdsetup enable
-  when: filevault_status.stdout == "FileVault is Off." 
 
 - name: "2.5.2.1 Enable Gatekeeper"
   tags: level_1
