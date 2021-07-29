@@ -1,0 +1,27 @@
+---
+# 5.X
+
+# 5.2 Organization Password Policy
+
+org_requiresAlpha: 1
+org_requiresNumeric: 1
+org_requiresSymbol: 1
+org_requiresMixedCase: 1
+org_maxMinutesUntilChangePassword: 525600
+org_usingHistory: 15
+
+# 5.4
+login_keychain_lock: 21600
+
+# 5.10
+standbydelaylow: 600
+standbydelayhigh: 600
+highstandbythreshold: 90
+destroyfvkeyonstandby: 1
+hibernatemode: 25
+
+# 5.13
+login_screen_message: "Access to this system is reserved for authorized use only. The use of this system may be monitored."
+
+# 5.14
+login_banner: "Access to this system is reserved for authorized use only. The use of this system may be monitored."

@@ -8,6 +8,9 @@ These compliances are executed using [Ansible](https://www.ansible.com/) playboo
 ### Installing Ansible 
 To run Ansible playbooks, Ansible must be installed. Install Ansible for your desired OS [here](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#).
 
+### Update Organization-defined Values
+The `vars/org.yml` file contains default values derived from the CIS Benchmark, but they can be updated in this file to values that have been defined for the organization.
+
 ### Executing Playbooks 
 To run both Level 1 and Level 2 hardening tasks:
 
@@ -27,6 +30,7 @@ To run Level 2 hardening tasks only, run the following:
 - It is possible that certain user configurations that are being check in this playbook do not yet exist on an endpoint. When this is the case, we have added the `ignore_errors: yes` flag to those tasks and have coded the remediations to set the correct values when those user configuration checks have a return code of 1.
 
 ### 2.X
+- Task 2.5.1.1 _Enable FileVault_ requires local user name and password to be enabled via CLI. To conduct this manually, see page 91 of the Benchmark.
 - Task 2.5.1.2 _Ensure all user storage APFS volumes are encrypted_ requires specific volume names that can vary for different machines based on their configurations. To conduct this manually, see page 95 of the Benchmark. 
 - Task 2.5.1.3 _Ensure all user storage CoreStorage volumes are encrypted_ requires specific volume names that can vary for different machines based on their configurations. To conduct this manually, see page 99 of the Benchmark. 
 - Task 2.7.2 _Time Machine Volumes Are Encrypted_ requires specific volume names that can vary for different machines based on their configuration. To conduct this manually, see page 147 of the Benchmark. 
@@ -40,10 +44,12 @@ To run Level 2 hardening tasks only, run the following:
 - Task 5.2.7 _Password Age_ has a standard of passwords expiring after at most 365 days, however it should be modified to your organization's standards if applicable.
 - Task 5.2.8 _Password History_ has a standard of requiring a password to be different from at least the last 15 passwords, however it should be modified to your organization's standards if applicable. 
 - Task 5.4 _Automatically lock the login keychain for inactivity_ has a standard of locking the keychain after 6 hours of inactivity, however this should be modified to your organizaiton's standards if applicable. 
-- Task 5.10 _Ensure System is set to hibernate_ is set to CIS' example, however it should be modified to your organization's standards if applicable. 
+- Task 5.10 _Ensure System is set to hibernate_ is set to CIS default, however it should be modified to your organization's standards if applicable. 
 - Task 5.13 _Create a custom message for the Login Screen_ contains a placeholder message, however it should be modified to your organization's standards if applicable. 
 - Task 5.14 _Create a Login window banner_ contains a placeholder message, however it should be modified to your organization's standards if applicable. 
 - Task 5.17 _Secure individual keychains and items_ allows for a user's keychain to have a separate password than the user's account. This applied based on your organization's standards if applicable, refer to page 266 of the Benchmark. 
+- Task 5.18 _System Integrity Protection status_ must be run from the Recovery OS.
+- Task 5.19 _Enable Sealed System Volume (SSV)_ must be run from the Recovery OS.
 ### 7.X
 - Task 7.1 _Extensible Firmware Interface (EFI) password_ is not a recommended practice for most use cases at this time. Refer to page 295 of the Benchmark for more information.
 - Task 7.2 _FileVault and Local Account Password Reset using AppleID_ is a concern in Enterprise environments. It may be unfavorable to use Apple services instead of Enterprise services. Refer to page 297 of the Benchmark. 

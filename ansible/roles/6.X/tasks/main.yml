@@ -25,18 +25,19 @@
 - name: 6.1.5 Remove Guest home folder 
   tags: level_1
   command: rm -R /Users/Guest
+  ignore_errors: yes
 
 - name: 6.2 Turn on filename extensions 
   tags: level_1 
   shell: |
       su "{{ item }}" 
       defaults write /Users/$user/Library/Preferences/.GlobalPreferences.plist AppleShowAllExtensions -bool true 
-  with_items: "{{ local_users.stdout_lines }}"
+  with_items: "{{ users }}"
 
 - name: 6.3 Disable the automatic run of safe files in Safari 
   tags: level_1
   shell: |
       su "{{ item }}"
       defaults write /Users/$user/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari AutoOpenSafeDownloads -bool false
-  with_items: "{{ local_users.stdout_lines }}"
+  with_items: "{{ users }}"
 
