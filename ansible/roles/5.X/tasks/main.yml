@@ -5,6 +5,7 @@
 - name: Get System World Writeable Files
   shell: find /System -type d -perm -2 | grep -v "Public/Drop Box"
   register: sww_files
+  when: full_disk_access == true
 
 - name: Get Library World Writable Files
   shell: find /Library -type d -perm -2 | grep -v Caches | grep -v Audio
@@ -65,6 +66,7 @@
     recurse: yes
   with_items: "{{ sww_files.stdout_lines }}"
   ignore_errors: yes
+  when: full_disk_access == true
 
 - name: 5.1.4 Check Library folder for world writable files
   tags: level_2
