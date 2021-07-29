@@ -18,6 +18,7 @@
   connection: local
   vars_files:
     - vars/org.yml
+    - vars/defaults.yml
   roles:
     - 1.X
     - 2.X

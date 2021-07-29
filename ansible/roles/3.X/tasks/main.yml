@@ -22,17 +22,27 @@
 
 - name: 3.3 Retain install.log for 365 or more days with no maximum size (1)
   tags: level_1
-  shell: |
-    mv /etc/asl/com.apple.install /etc/asl/com.apple.install.old
-    sed '$s/$/ ttl=365/' /etc/asl/com.apple.install.old > /etc/asl/com.apple.install
+  ansible.builtin.lineinfile:
+    path: /etc/asl/com.apple.install
+    regexp: ttl=
+    line: ttl=365
   when: install_retention.stdout == ""
+  register: install_retention_done
 
 - name: 3.3 Retain install.log for 365 or more days with no maximum size (2)
   tags: level_1
-  shell: |
-    mv /etc/asl/com.apple.install /etc/asl/com.apple.install.old
-    sed '$s/{{ install_retention }}/ ttl=365/' /etc/asl/com.apple.install.old > /etc/asl/com.apple.install
+  ansible.builtin.lineinfile:
+    path: /etc/asl/com.apple.install
+    regexp: ttl=\d+
+    line: ttl=365
   when: install_retention.stdout|int < 365
+
+- name: 3.3 Retain install.log for 365 or more days with no maximum size (3)
+  tags: level_1
+  ansible.builtin.lineinfile:
+    path: /etc/asl/com.apple.install
+    regexp: all_max=
+    state: absent
 
 - name: 3.4 Ensure security auditing retention 
   tags: level_1

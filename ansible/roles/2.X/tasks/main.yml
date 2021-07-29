@@ -4,8 +4,9 @@
 
 #This check will be updated in v1.3.0. See: https://workbench.cisecurity.org/tickets/13360
 - name: Bluetooth Paired Devices
-  shell: system_profiler SPBluetoothDataType | grep "Bluetooth:" -A 20 | grep Connectable
+  shell: "system_profiler SPBluetoothDataType 2>/dev/null | grep -m1 Paired: Yes"
   register: bt_datatype
+  ignore_errors: yes
 
 - name: FileVault Status
   shell: fdesetup status
@@ -47,9 +48,15 @@
   shell: defaults write com.apple.dock wvous-br-corner -int 10
   register: cornerfourfix
 
-- name: 2.1.1 Turn off Bluetooth, if no paired devices exist
-  shell: defaults write /Library/Preferences/com.apple.Bluetooth ControllerPowerstate -int 0 & killall -HUP blued
-  when: bt_power.stdout|int == 1 and bt_datatype.stdout == "Connectable{{':'}} No."
+- name: 2.1.1 Turn off Bluetooth, if no paired devices exist (1)
+  shell: defaults write /Library/Preferences/com.apple.Bluetooth ControllerPowerstate -int 0
+  when: bt_power.stdout|int == 1 and bt_datatype.stdout == ""
+
+- name: 2.1.1 Turn off Bluetooth, if no paired devices exist (2)
+  shell: killall -HUP blued
+  when: bt_power.stdout|int == 1 and bt_datatype.stdout == ""
+  register: kill_bt
+  failed_when: kill_bt.rc > 1
 
 - name: 2.1.2 Show Bluetooth status in menu bar 
   tags: level_1
@@ -108,9 +115,10 @@
   with_items: "{{ users }}"
   when: cornerfour|int == 6 or cornerfour.rc == 1
 
-- name: "2.4.1 Disable Removte Apple Events"
+- name: "2.4.1 Disable Remote Apple Events"
   tags: level_1
   command: systemsetup -setremoteappleevents off
+  when: full_disk_access == "true"
 
 - name: "2.4.2 Disable Internet Sharing"
   tags: level_1
@@ -124,9 +132,9 @@
   tags: level_1
   command: cupsctl --no-share-printers
 
-#- name: "2.4.5 Disable Remote Login"
-#  tags: level_1
-#  command: yes | systemsetup -setremotelogin off
+- name: "2.4.5 Disable Remote Login"
+  tags: level_1
+  shell: yes yes | systemsetup -setremotelogin off
 
 - name: "2.4.6 Disable DVD or CD Sharing"
   tags: level_1

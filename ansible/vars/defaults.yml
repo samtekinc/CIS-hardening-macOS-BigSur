@@ -1,0 +1,3 @@
+---
+# Full Disk Access is required for some commands to be successful. It is disabled by default, and can be turn on here once full disk access has been granted to the process running the playbook
+full_disk_access: false
