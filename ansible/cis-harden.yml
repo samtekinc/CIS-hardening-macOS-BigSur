@@ -19,9 +19,9 @@
   vars_files:
     - vars/org.yml
   roles:
-    #- 1.X
-    #- 2.X
-    #- 3.X
-    #- 4.X
+    - 1.X
+    - 2.X
+    - 3.X
+    - 4.X
     - 5.X
     - 6.X
