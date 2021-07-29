@@ -9,9 +9,9 @@
 - name: 4.2 Enable "Show Wi-Fi status in menu bar"
   tags: level_1
   shell: | 
-      su "{{ item }}"
-      defaults -currentHost write com.apple.controlcenter.plist WiFi -int 18 
-  with_items: "{{ local_users.stdout_lines}}"
+    su "{{ item }}"
+    defaults -currentHost write com.apple.controlcenter.plist WiFi -int 18 
+  with_items: "{{ local_users.stdout_lines }}"
   
 
 # 4.3 Create network specific locations involves the removal and creation of any Network locations present on a mac machine, this can vary with your organization and cannot be automated. 

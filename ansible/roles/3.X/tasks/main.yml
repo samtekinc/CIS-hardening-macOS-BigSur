@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 - name: Install Retention 
-=======
-- name: Install Retention
->>>>>>> main
   shell: grep -i ttl /etc/asl/com.apple.install | awk -F'ttl=' '{print $2}'
   register: install_retention
 
@@ -24,17 +20,6 @@
 		  #sed "s/"ttl=$installRetention"/"ttl=365"/g" /etc/asl/com.apple.install.old > /etc/asl/com.apple.install
     #fi
 
-<<<<<<< HEAD
-- name: 3.3 Retain install.log for 365 or more days with no maximum size
-  tags: level_1
-  command: |
-    mv /etc/asl/com.apple.install /etc/asl/com.apple.install.old
-		sed '$s/$/ ttl=365/' /etc/asl/com.apple.install.old > /etc/asl/com.apple.install
-  when: install_retention.stdout == ""  
-  
-- name: 3.3 Retain install.log for 365 or more days with no maximum size (2)
-  tags: level_1
-=======
 - name: 3.3 Retain install.log for 365 or more days with no maximum size (1)
   tags: level_1
   shell: |
@@ -44,15 +29,10 @@
 
 - name: 3.3 Retain install.log for 365 or more days with no maximum size (2)
   tags: level_1
->>>>>>> main
   shell: |
     mv /etc/asl/com.apple.install /etc/asl/com.apple.install.old
     sed '$s/{{ install_retention }}/ ttl=365/' /etc/asl/com.apple.install.old > /etc/asl/com.apple.install
   when: install_retention.stdout|int < 365
-<<<<<<< HEAD
-
-=======
->>>>>>> main
 
 - name: 3.4 Ensure security auditing retention 
   tags: level_1

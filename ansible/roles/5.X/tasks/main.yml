@@ -14,17 +14,41 @@
   shell: find /Library -type d -perm -2 | grep -v Caches | grep -v Audio
   register: lww_files
 
+- name: Password Policy Min Letters
+  shell: pwpolicy -getaccountpolicies | grep -A1 minimumLetters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1
+  register: pp_min_alpha
+
+- name: Password Policy Min Numbers
+  shell: pwpolicy -getaccountpolicies | grep -A1 minimumNumericCharacters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1
+  register: pp_min_number
+
+- name: Password Policy Min Symbols
+  shell: pwpolicy -getaccountpolicies | grep -A1 minimumSymbols | tail -1 | cut -d'>' -f2 | cut -d '<' -f1
+  register: pp_min_symbol
+
+- name: Password Policy Mixed Characters
+  shell: pwpolicy -getaccountpolicies | grep -A1 minimumMixedCaseCharacters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1
+  register: pp_mixed_char
+
+- name: Password Policy Age
+  shell: pwpolicy -getaccountpolicies | grep -A1 policyAttributeDaysUntilExpiration | tail -1 | cut -d'>' -f2 | cut -d '<' -f1
+  register: pp_age
+
+- name: Password Policy History
+  shell: pwpolicy -getaccountpolicies | grep -A1 policyAttributePasswordHistoryDepth | tail -1 | cut -d'>' -f2 | cut -d '<' - f1
+  register: pp_history
+
 # 5.1
 
 - name: 5.1.1 Secure Home Folders
+  tags: level_1
   ansible.builtin.file:
     path: /Users/"{{ item }}"
     owner: "{{ item }}"
     mode: og-rwx
     state: directory
     recurse: yes
-  loop: "{{ local_users }}"
-  tags: level_1
+  with_items: "{{ local_users.stdout_lines }}"
 
 - name: 5.1.2 Check System Wide Applications for appropriate permissions
   tags: level_1
@@ -67,42 +91,37 @@
   tags: level_2
   command: |
     pwpolicy -n /Local/Default -setglobalpolicy "requiresAlpha=1"
-  when: pwpolicy -getaccountpolicies | grep -A1 minimumLetters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1
+  when: pp_min_alpha.stdout|int < 1
   # Only change if the output is less than 1. If greater, do not reduce to 1. This should be modified to organizational threshold
 
 - name: 5.2.4 Complex passwords must contain a Numeric Character
   tags: level_2
-  command: |
-    pwpolicy -n /Local/Default -setglobalpolicy "requiresNumeric=1"
-  when: pwpolicy -getaccountpolicies | grep -A1 minimumNumericCharacters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1
+  command: pwpolicy -n /Local/Default -setglobalpolicy "requiresNumeric=1"
+  when: pp_min_number.stdout|int < 1
   # Only change if the output is less than 1. If greater, do not reduce to 1. This should be modified to organizational threshold
 
 - name: 5.2.5 Complex passwords must contain a Special Character
   tags: level_2
-  command: |
-    pwpolicy -n /Local/Default -setglobalpolicy "requiresSymbol=1"
-  when: pwpolicy -getaccountpolicies | grep -A1 minimumSymbols | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1 
+  command: pwpolicy -n /Local/Default -setglobalpolicy "requiresSymbol=1"
+  when: pp_min_symbol.stdout|int < 1 
   # Only change if the output is less than 1. If greater, do not reduce to 1. This should be modified to organizational threshold
 
 - name: 5.2.6 Complex passwords must [contain] uppercase and lowercase letters
   tags: level_2
-  command: |
-    pwpolicy -n /Local/Default -setglobalpolicy "requiresMixedCase=1"
-  when: pwpolicy -getaccountpolicies | grep -A1 minimumMixedCaseCharacters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) < 1 
+  command: pwpolicy -n /Local/Default -setglobalpolicy "requiresMixedCase=1"
+  when: pp_mixed_char.stdout|int < 1 
   # Only change if the output is less than 1. If greater, do not reduce to 1. This should be modified to organizational threshold
 
 - name: 5.2.7 Password Age
   tags: level_1
-  command: |
-      pwpolicy -n /Local/Default -setglobalpolicy "maxMinutesUntilChangePassword=525600"
-  when: pwpolicy -getaccountpolicies | grep -A1 policyAttributeDaysUntilExpiration | tail -1 | cut -d'>' -f2 | cut -d '<' -f1) > 365 
+  command: pwpolicy -n /Local/Default -setglobalpolicy "maxMinutesUntilChangePassword=525600"
+  when: pp_age.stdout|int > 365 
   # Only change if the output is greater than 365 days. If less, do not increase to 365. This should be modified to organizational threshold
 
 - name: 5.2.8 Password History
   tags: level_1
-  command: |
-    pwpolicy -n /Local/Default -setglobalpolicy "usingHistory=15"
-  when: pwpolicy -getaccountpolicies | grep -A1 policyAttributePasswordHistoryDepth | tail -1 | cut -d'>' -f2 | cut -d '<' - f1) < 15 
+  command: pwpolicy -n /Local/Default -setglobalpolicy "usingHistory=15"
+  when: pp_history.stdout|int < 15 
   # Only change if the output is less than 15 password entries. If greater, do not reduce to 15. This should be modified to organizational threshold
 
 - name: 5.3 Reduce the sudo timeout period
@@ -111,37 +130,57 @@
     path: /etc/sudoers
     regexp: 'Defaults timestamp_timeout='
     line: "Defaults timestamp_timeout=0"
+    backup: yes
+    validate: /usr/sbin/visudo -cf %s
 
 - name: 5.4 Automatically lock the login keychain for inactivity
   tags: level_2
   command: |
     su "{{ item }}"
     security set-keychain-settings -t 21600 /Users/"{{ item }}"/Library/Keychains/login.keychain
-  loop: "{{ local_users }}"
+  with_items: "{{ local_users.stdout_lines }}"
   # This should be modified to organizational threshold
 
-- name: 5.5 Use a separate timestamp for each user/tty combo (1) 
+- name: 5.5 Use a separate timestamp for each user/tty combo (1)
   tags: level_1
-  ansible.builtin.file:
+  ansible.builtin.replace:
     path: /etc/sudoers
-    owner: root
-    group: wheel 
-    mode: -o-rw 
+    regexp: "Defaults !tty_tickets"
+    replace: "Defaults"
+    backup: yes
+    validate: /usr/sbin/visudo -cf %s
 
 - name: 5.5 Use a separate timestamp for each user/tty combo (2)
   tags: level_1
-  shell: sed -i ".old" '/Default !tty_tickets/d' /etc/sudoers
-  ansible.builtin.file:
+  ansible.builtin.replace:
     path: /etc/sudoers
-    state: absent 
-    regexp: "!tty_tickets"
+    regexp: "(Defaults timestamp_type=)\w+"
+    replace: "Defaults timestamp_type=tty"
+    backup: yes
+    validate: /usr/sbin/visudo -cf %s
+
+- name: 5.5 Use a separate timestamp for each user/tty combo (3)
+  tags: level_1
+  ansible.builtin.replace:
+    path: /etc/sudoers.d
+    regexp: "Defaults !tty_tickets"
+    replace: "Defaults"
+    backup: yes
+
+- name: 5.5 Use a separate timestamp for each user/tty combo (4)
+  tags: level_1
+  ansible.builtin.replace:
+    path: /etc/sudoers.d
+    regexp: "(Defaults timestamp_type=)\w+"
+    replace: "Defaults timestamp_type=tty"
+    backup: yes
 
 - name: 5.6 Ensure login keychain is locked when the computer sleeps
   tags: level_2
   command: |
     su "{{ item }}"
     security set-keychain-settings -l /Users/"{{ item }}"/Library/Keychains/login.keychain
-  loop: "{{ local_users }}"
+  with_items: "{{ local_users.stdout_lines }}"
 
 - name: 5.7 Do not enable the "root" account
   tags: level_1
@@ -156,7 +195,7 @@
   shell: |
     su "{{ item }}"
     defaults write /Users/"{{ item }}"/Library/Preferences/com.apple.screensaver askForPassword -int 1
-  loop: "{{ local_users }}"
+  with_items: "{{ local_users.stdout_lines }}"
 
 - name: 5.10 Ensure system is set to hibernate
   tags: level_2
@@ -193,7 +232,7 @@
 - name: 5.15 Do not enter a password-related hint
   tags: level_1
   command: dscl . -delete /Users/"{{ item }}" hint
-  loop: "{{ local_users }}"
+  with_items: "{{ local_users.stdout_lines }}"
 
 - name: 5.16 Disable Fast User Switching
   tags: level_2
