@@ -154,7 +154,7 @@
   tags: level_1
   ansible.builtin.replace:
     path: /etc/sudoers
-    regexp: "(Defaults timestamp_type=)\w+"
+    regexp: "(Defaults timestamp_type=)\\w+"
     replace: "Defaults timestamp_type=tty"
     backup: yes
     validate: /usr/sbin/visudo -cf %s
@@ -171,7 +171,7 @@
   tags: level_1
   ansible.builtin.replace:
     path: /etc/sudoers.d
-    regexp: "(Defaults timestamp_type=)\w+"
+    regexp: "(Defaults timestamp_type=)\\w+"
     replace: "Defaults timestamp_type=tty"
     backup: yes
 

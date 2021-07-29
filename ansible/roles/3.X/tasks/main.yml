@@ -12,12 +12,12 @@
   #tags: level_1
  # command: |
    # installRetention="$(grep -i ttl /etc/asl/com.apple.install | awk -F'ttl=' '{print $2}')"
-	 # if [[ "$installRetention" = "" ]]; then
-		#  mv /etc/asl/com.apple.install /etc/asl/com.apple.install.old
-		#  sed '$s/$/ ttl=365/' /etc/asl/com.apple.install.old > /etc/asl/com.apple.install
+   # if [[ "$installRetention" = "" ]]; then
+    #  mv /etc/asl/com.apple.install /etc/asl/com.apple.install.old
+    #  sed '$s/$/ ttl=365/' /etc/asl/com.apple.install.old > /etc/asl/com.apple.install
     #elif [[ "$installRetention" -lt "365" ]]; then
-		 # mv /etc/asl/com.apple.install /etc/asl/com.apple.install.old
-		  #sed "s/"ttl=$installRetention"/"ttl=365"/g" /etc/asl/com.apple.install.old > /etc/asl/com.apple.install
+     # mv /etc/asl/com.apple.install /etc/asl/com.apple.install.old
+      #sed "s/"ttl=$installRetention"/"ttl=365"/g" /etc/asl/com.apple.install.old > /etc/asl/com.apple.install
     #fi
 
 - name: 3.3 Retain install.log for 365 or more days with no maximum size (1)
