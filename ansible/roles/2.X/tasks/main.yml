@@ -2,7 +2,6 @@
   shell: defaults read /Library/Preferences/com.apple.Bluetooth ControllerPowerState
   register: bt_power
 
-#This check will be updated in v1.3.0. See: https://workbench.cisecurity.org/tickets/13360
 - name: Bluetooth Paired Devices
   shell: "system_profiler SPBluetoothDataType 2>/dev/null | grep -m1 Paired: Yes"
   register: bt_datatype
@@ -190,8 +189,6 @@
   tags: level_2
   command: launchctl load -w /System/Library/LaunchDaemons/com.apple.locationd.plist
 
-# 2.5.4 Monitor Location Services Access Has no set remediation and should be followed if applicable
-
 - name: 2.5.5 Disable sending diagnostic and usage data to Apple
   tags: level_2
   shell: |
@@ -205,19 +202,6 @@
     su "{{ item }}"
     defaults -currentHost write /Users/$user/Library/Preferences/com.apple.Adlib.plist allowApplePersonalizedAdvertising -bool false
   with_items: "{{ local_users.stdout_lines }}"
-
-# 2.6.1 iCloud configuration depends upon your organization's policies if applicable
-
-# 2.6.2 iCloud keychain depends upon your organization's policies if applicable
-
-# 2.6.3 iCloud Drive depends upon your organization's policies if applicable
-
-#- name: 2.6.4 iCloud Drive Document and Desktop sync   
-  #tags: level_2
-  #command: 
-# 2.6.4 requires UI scripting
-
-# 2.7.1 Time Machine Auto-Backup requires specific volume names that can vary across machines in order to function
 
 - name: "2.8 Disable Wake for network access"
   tags: level_1
