@@ -93,37 +93,37 @@
   command: |
     pwpolicy -n /Local/Default -setglobalpolicy "requiresAlpha={{ org_requiresAlpha }}"
   when: pp_min_alpha.stdout|int < 1
-  # Only change if the output is less than the orgnanizational threshold. If greater, do not reduce.
+  # Only change if the output is less than the organizational threshold. If greater, do not reduce.
 
 - name: 5.2.4 Complex passwords must contain a Numeric Character
   tags: level_2
   command: pwpolicy -n /Local/Default -setglobalpolicy "requiresNumeric={{ org_requiresNumeric}}"
   when: pp_min_number.stdout|int < 1
-  # Only change if the output is less than the orgnanizational threshold. If greater, do not reduce.
+  # Only change if the output is less than the organizational threshold. If greater, do not reduce.
 
 - name: 5.2.5 Complex passwords must contain a Special Character
   tags: level_2
   command: pwpolicy -n /Local/Default -setglobalpolicy "requiresSymbol={{ org_requiresSymbol }}"
   when: pp_min_symbol.stdout|int < 1 
-  # Only change if the output is less than the orgnanizational threshold. If greater, do not reduce.
+  # Only change if the output is less than the organizational threshold. If greater, do not reduce.
 
 - name: 5.2.6 Complex passwords must [contain] uppercase and lowercase letters
   tags: level_2
   command: pwpolicy -n /Local/Default -setglobalpolicy "requiresMixedCase={{ org_requiresMixedCase }}"
   when: pp_mixed_char.stdout|int < 1 
-  # Only change if the output is less than the orgnanizational threshold. If greater, do not reduce
+  # Only change if the output is less than the organizational threshold. If greater, do not reduce
 
 - name: 5.2.7 Password Age
   tags: level_1
   command: pwpolicy -n /Local/Default -setglobalpolicy "maxMinutesUntilChangePassword={{ org_maxMinutesUntilChangePassword }}"
   when: pp_age.stdout|int > org_maxMinutesUntilChangePassword / 1440 
-  # Only change if the output is greater than the orgnanizational threshold in days. If less, do not increase.
+  # Only change if the output is greater than the organizational threshold in days. If less, do not increase.
 
 - name: 5.2.8 Password History
   tags: level_1
   command: pwpolicy -n /Local/Default -setglobalpolicy "usingHistory={{ org_usingHistory }}"
   when: pp_history.stdout|int < org_usingHistory
-  # Only change if the output is less than the orgnanizational threshold for password entries. If greater, do not reduce.
+  # Only change if the output is less than the organizational threshold for password entries. If greater, do not reduce.
 
 - name: 5.3 Reduce the sudo timeout period
   tags: level_1
@@ -133,13 +133,6 @@
     line: "Defaults timestamp_timeout=0"
     backup: yes
     validate: /usr/sbin/visudo -cf %s
-
-#- name: 5.4 Automatically lock the login keychain for inactivity
-#  tags: level_2
-#  shell: |
-#    su "{{ item }}"
-#    security set-keychain-settings -t "{{ login_keychain_lock }}" /Users/"{{ item }}"/Library/Keychains/login.keychain
-#  with_items: "{{ users }}"
 
 - name: 5.5 Use a separate timestamp for each user/tty combo (1)
   tags: level_1
@@ -158,13 +151,6 @@
     replace: "Defaults timestamp_type=tty"
     backup: yes
     validate: /usr/sbin/visudo -cf %s
-
-#- name: 5.6 Ensure login keychain is locked when the computer sleeps
-#  tags: level_2
-#  shell: |
-#    su "{{ item }}"
-#    security set-keychain-settings -l /Users/"{{ item }}"/Library/Keychains/login.keychain
-#  with_items: "{{ users }}"
 
 - name: 5.7 Do not enable the "root" account
   tags: level_1
@@ -224,8 +210,6 @@
 - name: 5.16 Disable Fast User Switching
   tags: level_2
   shell: defaults write /Library/Preferences/.GlobalPreferences MultipleSessionEnabled -bool false
-
-# 5.17 TBD
 
 - name: 5.18 System Integrity Protection status
   tags: level_1
