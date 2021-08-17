@@ -2,6 +2,15 @@
   tags: level_2
   shell: defaults write /Library/Preferences/com.apple.mDNSResponder.plist NoMulticastAdvertisements -bool true
 
+- name: 4.1 Disable Bonjour advertising service
+  tags: level_2
+  osx_defaults:
+    domain: /Library/Preferences/com.apple.mDNSResponder.plist
+    key: NoMulticastAdvertisements
+    type: int 
+    value: '1'
+  become: yes 
+
 - name: 4.2 Enable "Show Wi-Fi status in menu bar"
   tags: level_1
   shell: | 

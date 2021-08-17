@@ -1,3 +1,6 @@
+- name: osx_defaults install 
+  command: ansible-galaxy collection install community.general
+
 - name: 1.1 Verify all Apple-provided software is current
   tags: level_1
   command: softwareupdate -i -a
@@ -6,13 +9,41 @@
   tags: level_1
   shell: defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
 
+- name: 1.2 Enable Auto Update
+  tags: level_1
+  osx_defaults: 
+    domain: /Library/Preferences/com.apple.SoftwareUpdate 
+    key: AutomaticCheckEnabled
+    type: int 
+    value: '1' 
+  become: yes 
+
 - name: 1.3 Enable Download new updates when available
   tags: level_1
   shell: defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true
 
+- name: 1.3 Enable Download new updates when available
+  tags: level_1
+  osx_defaults:
+    domain: /Library/Preferences/com.apple.SoftwareUpdate
+    key: AutomaticDownload
+    type: int 
+    value: '1' 
+  become: yes 
+
 - name: 1.4 Enable app update installs 
   tags: level_1
   shell: defaults write /Library/Preferences/com.apple.commerce AutoUpdate -bool TRUE 
+
+# 1.4 Enable app update installs
+- name: 1.4 Enable app update installs
+  tags: level_1 
+  osx_defaults:
+    domain: /Library/Preferences/com.apple.commerce
+    key: AutoUpdate
+    type: int
+    value: '1'
+  become: yes 
 
 - name: 1.5 Enable system data files and security updates install
   tags: level_1
@@ -20,9 +51,34 @@
   with_items:
     - defaults write /Library/Preferences/com.apple.SoftwareUpdate ConfigDataInstall -bool true 
     - defaults write /Library/Preferences/com.apple.SoftwareUpdate CriticalUpdateInstall -bool true 
-    
+  
+- name: 1.5 Enable system data files and security updates install (1)
+  tags: level_1 
+  osx_defaults:
+    domain: /Library/Preferences/com.apple.SoftwareUpdate
+    key: ConfigDataInstall
+    type: int
+    value: '1'
+  become: yes
+
+- name: 1.5 Enable system data files and security updates install (2)
+  tags: level_1 
+  osx_defaults:
+    domain: /Library/Preferences/com.apple.SoftwareUpdate
+    key: CriticalUpdateInstall
+    type: int
+    value: '1'
+  become: yes
+
 - name: 1.6 Enable macOS update installs
   tags: level_1
   shell: defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates -bool TRUE
 
-
+- name: 1.6 Enable macOS update installs
+  tags: level_1
+  osx_defaults:
+    domain: /Library/Preferences/com.apple.SoftwareUpdate
+    key: AutomaticallyInstallMacOSUpdates
+    type: int
+    value: '1'
+  become: yes 

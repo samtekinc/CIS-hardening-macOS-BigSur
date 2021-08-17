@@ -8,19 +8,64 @@
   shell: defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME -bool true
   # Note GUI will not display the updated setting until the current user(s) logs out. 
 
+- name: 6.1.1 Display login window as name and password
+  tags: level_1
+  osx_defaults:
+    domain: /Library/Preferences/com.apple.loginwindow
+    key: SHOWFULLNAME
+    type: int
+    value: '1'
+  become: yes
+
 - name: 6.1.2 Disable "Show password hints" 
   tags: level_1
   shell: defaults write /Library/Preferences/com.apple.loginwindow RetriesUntilHint -int 0
 
+- name: 6.1.2 Disable "Show password hints"
+  tags: level_1
+  osx_defaults:
+    domain: /Library/Preferences/com.apple.loginwindow
+    key: RetriesUntilHint
+    type: int
+    value: '0'
+  become: yes
+
 - name: 6.1.3 Disable guest account login 
   tags: level_1
   shell: defaults write /Library/Preferences/com.apple.loginwindow GuestEnabled -bool false
+
+- name: 6.1.3 Disable guest account login
+  tags: level_1
+  osx_defaults:
+    domain: /Library/Preferences/com.apple.loginwindow
+    key: GuestEnabled
+    type: int
+    value: '0'
+  become: yes
 
 - name: 6.1.4 Disable "Allow guests to connect to shared folders"
   tags: level_1
   shell: |
     defaults write /Library/Preferences/com.apple.AppleFileServer guestAccess -bool false
     defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server AllowGuestAccess -bool false
+
+- name: 6.1.4 Disable "Allow guests to connect to shared folders" (1)
+  tags: level_1
+  osx_defaults:
+    domain: /Library/Preferences/com.apple.AppleFileServer
+    key: guestAccess
+    type: int
+    value: '0'
+  become: yes
+
+- name: 6.1.4 Disable "Allow guests to connect to shared folders" (2)
+  tags: level_1
+  osx_defaults:
+    domain: /Library/Preferences/SystemConfiguration/com.apple.smb.server
+    key: AllowGuestAccess
+    type: int
+    value: '0'
+  become: yes
 
 - name: 6.1.5 Remove Guest home folder 
   tags: level_1

@@ -123,6 +123,15 @@
   tags: level_1
   shell: defaults write /Library/Preferences/SystemConfiguration/com.apple.nat NAT -dict Enabled -int 0
 
+# 2.4.2 Disable Internet Sharing
+- name: 2.4.2 Disable Internet Sharing
+  tags: level_1
+  osx_defaults: 
+    domain: /Library/Preferences/SystemConfiguration/com.apple.nat
+    key:  NAT -dict Enabled
+    type: int
+    value: '0'
+
 - name: "2.4.3 Disable Screen Sharing"
   tags: level_1
   command: launchctl disable system/com.apple.screensharing
