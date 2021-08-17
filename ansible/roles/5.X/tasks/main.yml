@@ -1,40 +1,67 @@
 - name: Get System Wide Applications
+  tags: 
+    - level_1
+    - level_2
   shell: find /Applications -iname "*\.app" -type d -perm -2
   register: sys_wide_apps
 
 - name: Get System World Writeable Files
+  tags: 
+    - level_1
+    - level_2
   shell: find /System -type d -perm -2 | grep -v "Public/Drop Box"
   register: sww_files
   when: full_disk_access == true
 
 - name: Get Library World Writable Files
+  tags: 
+    - level_1
+    - level_2
   shell: find /Library -type d -perm -2 | grep -v Caches | grep -v Audio
   register: lww_files
   ignore_errors: yes
 
 - name: Get Password Policy Min Letters
+  tags: 
+    - level_2
   shell: pwpolicy -getaccountpolicies | grep -A1 minimumLetters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1
   register: pp_min_alpha
 
 - name: Get Password Policy Min Numbers
+  tags: 
+    - level_2
   shell: pwpolicy -getaccountpolicies | grep -A1 minimumNumericCharacters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1
   register: pp_min_number
 
 - name: Get Password Policy Min Symbols
+  tags:
+    - level_2
   shell: pwpolicy -getaccountpolicies | grep -A1 minimumSymbols | tail -1 | cut -d'>' -f2 | cut -d '<' -f1
   register: pp_min_symbol
 
 - name: Get Password Policy Mixed Characters
+  tags:
+    - level_2
   shell: pwpolicy -getaccountpolicies | grep -A1 minimumMixedCaseCharacters | tail -1 | cut -d'>' -f2 | cut -d '<' -f1
   register: pp_mixed_char
 
 - name: Password Policy Age
+  tags: 
+    - level_1
   shell: pwpolicy -getaccountpolicies | grep -A1 policyAttributeDaysUntilExpiration | tail -1 | cut -d'>' -f2 | cut -d '<' -f1
   register: pp_age
 
 - name: Password Policy History
+  tags: 
+    - level_1
   shell: pwpolicy -getaccountpolicies | grep -A1 policyAttributePasswordHistoryDepth | tail -1 | cut -d'>' -f2 | cut -d '<' -f1
   register: pp_history
+
+- name: Get automatic login status
+  tags: level_1
+  shell: defaults read /Library/Preferences/com.apple.loginwindow autoLoginUser
+  register: auto_login_status
+  ignore_errors: yes
 
 # 5.1
 
@@ -155,11 +182,6 @@
 - name: 5.7 Do not enable the "root" account
   tags: level_1
   command: dscl . -create /Users/root UserShell /usr/bin/false
-
-- name: Get automatic login status
-  shell: defaults read /Library/Preferences/com.apple.loginwindow autoLoginUser
-  register: auto_login_status
-  ignore_errors: yes
 
 - name: 5.8 Disable automatic login
   tags: level_1

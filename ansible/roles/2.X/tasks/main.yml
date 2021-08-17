@@ -1,57 +1,92 @@
 - name: Bluetooth Power state
+  tags: 
+    - level_1
+    - level_2
   shell: defaults read /Library/Preferences/com.apple.Bluetooth ControllerPowerState
   register: bt_power
 
 - name: Bluetooth Paired Devices
+  tags: 
+    - level_1
+    - level_2
   shell: "system_profiler SPBluetoothDataType 2>/dev/null | grep -m1 Paired: Yes"
   register: bt_datatype
   ignore_errors: yes
 
 - name: FileVault Status
+  tags: 
+    - level_1
+    - level_2
   shell: fdesetup status
   register: filevault_status
 
 - name: Top Left Corner Value
+  tags: 
+    - level_1
+    - level_2
   shell: defaults read com.apple.dock wvous-tl-corner
   ignore_errors: yes
   register: cornerone
 
 - name: Bottom Left Corner Value
+  tags: 
+    - level_1
+    - level_2
   shell: defaults read com.apple.dock wvous-bl-corner
   ignore_errors: yes
   register: cornertwo
 
 - name: Top Right Corner Value
+  tags: 
+    - level_1
+    - level_2
   shell: defaults read com.apple.dock wvous-tr-corner
   ignore_errors: yes
   register: cornerthree
 
 - name: Bottom Right Corner Value
+  tags: 
+    - level_1
+    - level_2
   shell: defaults read com.apple.dock wvous-br-corner
   ignore_errors: yes
   register: cornerfour
 
 - name: Fix Top Left Corner
+  tags: 
+    - level_1
+    - level_2
   shell: defaults write com.apple.dock wvous-tl-corner -int 0
   register: corneronefix
 
-- name: Fix Bottom Left Corner 
+- name: Fix Bottom Left Corner
+  tags: 
+    - level_1
+    - level_2
   shell: defaults write com.apple.dock wvous-bl-corner -int 0 
   register: cornertwofix 
 
-- name: Fix Top Right Corner 
+- name: Fix Top Right Corner
+  tags: 
+    - level_1
+    - level_2
   shell: defaults write com.apple.dock wvous-tr-corner -int 0 
   register: cornerthreefix
 
-- name: Fix Bottom Right Corner 
+- name: Fix Bottom Right Corner
+  tags: 
+    - level_1
+    - level_2
   shell: defaults write com.apple.dock wvous-br-corner -int 10
   register: cornerfourfix
 
 - name: 2.1.1 Turn off Bluetooth, if no paired devices exist (1)
+  tags: level_1
   shell: defaults write /Library/Preferences/com.apple.Bluetooth ControllerPowerstate -int 0
   when: bt_power.stdout|int == 1 and bt_datatype.stdout == ""
 
 - name: 2.1.1 Turn off Bluetooth, if no paired devices exist (2)
+  tags: level_1
   shell: killall -HUP blued
   when: bt_power.stdout|int == 1 and bt_datatype.stdout == ""
   register: kill_bt
@@ -164,14 +199,14 @@
   shell: |
     su "{{ item }}"
     defaults write com.apple.amp.mediasharingd home-sharing-enabled -int 0
-  with_items: "{{ local_users.stdout_lines }}"
+  with_items: "{{ users }}"
 
 - name: "2.4.12 Ensure AirDrop is Disabled"
   tags: level_1
   shell: |
     su "{{ item }}"
     defaults write com.apple.NetworkBrowser DisableAirDrop -bool true
-  with_items: "{{ local_users.stdout_lines }}"
+  with_items: "{{ users }}"
 
 - name: "2.5.2.1 Enable Gatekeeper"
   tags: level_1
@@ -201,7 +236,7 @@
   shell: |
     su "{{ item }}"
     defaults -currentHost write /Users/$user/Library/Preferences/com.apple.Adlib.plist allowApplePersonalizedAdvertising -bool false
-  with_items: "{{ local_users.stdout_lines }}"
+  with_items: "{{ users }}"
 
 - name: "2.8 Disable Wake for network access"
   tags: level_1
@@ -216,7 +251,7 @@
   shell: |
     su "{{ item }}"
     defaults write -app Terminal SecureKeyboardEntry -bool true
-  with_items: "{{ local_users.stdout_lines }}"
+  with_items: "{{ users }}"
 
 - name: 2.12 Automatic Actions for Optical Media 
   tags: level_1
@@ -237,4 +272,4 @@
     defaults write com.apple.Siri.plist VoiceTriggerUserEnabled -bool false
     killall -HUP cfprefsd
     killall SystemUIServer
-  with_items: "{{ local_users.stdout_lines }}"
+  with_items: "{{ users }}"

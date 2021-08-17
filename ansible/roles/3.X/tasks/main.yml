@@ -1,4 +1,7 @@
-- name: Install Retention 
+- name: Install Retention
+  tags: 
+    - level_1
+    - level_2
   shell: grep -i ttl /etc/asl/com.apple.install | awk -F'ttl=' '{print $2}'
   register: install_retention
 

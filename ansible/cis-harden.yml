@@ -4,14 +4,26 @@
     - debug:
         msg: Check we are running in the directory of the script
       failed_when: not ansible_env.PWD.endswith('/ansible')
+      tags:
+        - level_1
+        - level_2
     - name: Set BASH as the default shell
       shell: chsh -s $(which bash) {{ lookup('env', 'USER') }}
       become: true
+      tags:
+        - level_1
+        - level_2
     - name: Get Users
       shell: dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody' | grep -v 'root'
       register: local_users
+      tags:
+        - level_1
+        - level_2
     - name: Users
       set_fact: users="{{ local_users.stdout_lines }}"
+      tags:
+        - level_1
+        - level_2
 
 
 - hosts: localhost
