@@ -2,7 +2,7 @@
 ## Introduction 
 The purpose of the CIS-hardening-macOS-BigSur Repository is to harden machines running macOS 11.0(BigSur) according to [CIS Apple macOS 11.0 Benchmark](https://learn.cisecurity.org/benchmarks) Level 1 and Level 2 Compliance. 
 
-These compliances are executed using [Ansible](https://www.ansible.com/) playbooks when applicable.
+Hardening tasks are executed using [Ansible](https://www.ansible.com/) playbooks.
 
 ## Instructions
 ### Installing Ansible 
