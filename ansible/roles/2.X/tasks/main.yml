@@ -1,4 +1,7 @@
 - name: Bluetooth Power state
+  osx_defaults:
+    domain: com.apple.Bluetooth
+    key: ControllerPowerState
   shell: defaults read /Library/Preferences/com.apple.Bluetooth ControllerPowerState
   register: bt_power
 
@@ -32,26 +35,48 @@
   register: cornerfour
 
 - name: Fix Top Left Corner
-  shell: defaults write com.apple.dock wvous-tl-corner -int 0
+  osx_defaults: 
+    domain: com.apple.dock
+    key: wvous-tl-corner
+    type: int
+    value: '0' 
   register: corneronefix
 
 - name: Fix Bottom Left Corner 
-  shell: defaults write com.apple.dock wvous-bl-corner -int 0 
+  osx_defaults: 
+    domain: com.apple.dock
+    key: wvous-bl-corner
+    type: int
+    value: '0'
   register: cornertwofix 
 
-- name: Fix Top Right Corner 
-  shell: defaults write com.apple.dock wvous-tr-corner -int 0 
+- name: Fix Top Right Corner
+  osx_defaults:
+    domain: com.apple.dock
+    key: wvous-tr-corner
+    type: int
+    value: '0' 
   register: cornerthreefix
 
 - name: Fix Bottom Right Corner 
-  shell: defaults write com.apple.dock wvous-br-corner -int 10
+  osx_defaults: 
+    domain: com.apple.dock
+    key: wvous-br-corner
+    type: int
+    value: '10'
   register: cornerfourfix
 
 - name: 2.1.1 Turn off Bluetooth, if no paired devices exist (1)
-  shell: defaults write /Library/Preferences/com.apple.Bluetooth ControllerPowerstate -int 0
+  tags: level_1
+  osx_defaults:
+    domain: /Library/Preferences/com.apple.Bluetooth
+    key: ControllerPowerstate
+    type: int
+    value: '0'
   when: bt_power.stdout|int == 1 and bt_datatype.stdout == ""
 
 - name: 2.1.1 Turn off Bluetooth, if no paired devices exist (2)
+  tags: level_1
   shell: killall -HUP blued
   when: bt_power.stdout|int == 1 and bt_datatype.stdout == ""
   register: kill_bt
@@ -59,10 +84,13 @@
 
 - name: 2.1.2 Show Bluetooth status in menu bar 
   tags: level_1
-  shell: |
-    su "{{ item }}"
-    defaults -currentHost write com.apple.controlcenter.plist Bluetooth -int 18
-  with_items: "{{ users }}"
+  osx_defaults:
+    domain: com.apple.controlcenter.plist
+    key: Bluetooth
+    type: int
+    value: '18'
+  become_user: target_user
+  become: true
 
 - name: "2.2.1 Enable Set time and date automatically"
   tags: level_1
@@ -77,41 +105,40 @@
 
 - name: "2.3.1 Set an inactivity interval of 20 minutes or less for the screen saver"
   tags: level_1
-  shell: |
-    su "{{ item }}"
-    defaults -currentHost write com.apple.screensaver idleTime -int 1200
-  with_items: "{{ users }}"
+  osx_defaults: 
+    domain: com.apple.screensaver
+    key: idleTime
+    type: int
+    value: '1200'
+  become_user: target_user
+  become: true
 
 - name: 2.3.2 Secure screen saver corners (Top Left) 
   tags: level_2
-  shell: | 
-    su "{{ item }}" 
+  command: | 
+    su "{{ target_user }}" 
     corneronefix
-  with_items: "{{ users }}"
   when: cornerone|int == 6 or cornerone.rc == 1
 
 - name: 2.3.2 Secure screen saver corners (Bottom Left)
   tags: level_2
-  shell: |
-    su "{{ item }}"
+  command: |
+    su "{{ target_user }}"
     cornertwofix
-  with_items: "{{ users }}"
   when: cornertwo|int == 6 or cornertwo.rc == 1
 
 - name: 2.3.2 Secure screen saver corners (Top Right)
   tags: level_2
-  shell: |
-    su "{{ item }}"
+  command: |
+    su "{{ target_user }}"
     cornerthreefix
-  with_items: "{{ users }}"
   when: cornerthree|int == 6 or cornerthree.rc == 1
 
 - name: 2.3.2 Secure screen saver corners (Bottom Right)
   tags: level_2
-  shell: |
-    su "{{ item }}"
+  command: |
+    su "{{ target_user }}"
     cornerfourfix
-  with_items: "{{ users }}"
   when: cornerfour|int == 6 or cornerfour.rc == 1
 
 - name: "2.4.1 Disable Remote Apple Events"
@@ -119,11 +146,6 @@
   command: systemsetup -setremoteappleevents off
   when: full_disk_access == "true"
 
-- name: "2.4.2 Disable Internet Sharing"
-  tags: level_1
-  shell: defaults write /Library/Preferences/SystemConfiguration/com.apple.nat NAT -dict Enabled -int 0
-
-# 2.4.2 Disable Internet Sharing
 - name: 2.4.2 Disable Internet Sharing
   tags: level_1
   osx_defaults: 
@@ -150,10 +172,13 @@
 
 - name: 2.4.7 Disable Bluetooth Sharing
   tags: level_1
-  shell: |
-    su "{{ item }}"
-    defaults -currentHost write com.apple.Bluetooth PrefKeyServicesEnabled -bool false
-  with_items: "{{ users }}"
+  osx_defaults:
+    domain: com.apple.Bluetooth
+    key: PrefKeyServicesEnabled
+    type: int
+    value: '0'
+  become_user: target_user
+  become: true
 
 - name: "2.4.8 Disable File Sharing"
   tags: level_1
@@ -169,18 +194,24 @@
   ignore_errors: yes
 
 - name: 2.4.11 Disable Media Sharing
-  tags: level_2
-  shell: |
-    su "{{ item }}"
-    defaults write com.apple.amp.mediasharingd home-sharing-enabled -int 0
-  with_items: "{{ local_users.stdout_lines }}"
+  tags: level_2 
+  osx_defaults: 
+    domain: com.apple.amp.mediasharingd
+    key: home-sharing-enabled
+    type: bool
+    value: 'false'
+  become_user: target_user
+  become: true 
 
 - name: "2.4.12 Ensure AirDrop is Disabled"
   tags: level_1
-  shell: |
-    su "{{ item }}"
-    defaults write com.apple.NetworkBrowser DisableAirDrop -bool true
-  with_items: "{{ local_users.stdout_lines }}"
+  osx_defaults:
+    domain: com.apple.NetworkBrowser
+    key: DisableAirDrop
+    type: bool
+    value: 'true' 
+  become_user: target_user
+  become: true
 
 - name: "2.5.2.1 Enable Gatekeeper"
   tags: level_1
@@ -188,7 +219,11 @@
 
 - name: "2.5.2.2 Enable Firewall"
   tags: level_1
-  shell: defaults write /Library/Preferences/com.apple.alf globalstate -int 2
+  osx_defaults:
+    domain: /Library/Preferences/com.apple.alf
+    key: globalstate
+    type: int
+    value: '2' 
 
 - name: "2.5.2.3 Enable Firewall Stealth Mode"
   tags: level_1
@@ -207,10 +242,13 @@
 
 - name: 2.5.6 Limit Ad tracking and personalized Ads
   tags: level_1
-  shell: |
-    su "{{ item }}"
-    defaults -currentHost write /Users/$user/Library/Preferences/com.apple.Adlib.plist allowApplePersonalizedAdvertising -bool false
-  with_items: "{{ local_users.stdout_lines }}"
+  osx_defaults:
+    domain: com.apple.Adlib.plist
+    key: allowApplePersonalizedAdvertising
+    type: bool
+    value: 'false'
+  become_user: target_user
+  become: true      
 
 - name: "2.8 Disable Wake for network access"
   tags: level_1
@@ -222,28 +260,65 @@
 
 - name: 2.10 Enable Secure Keyboard Entry in terminal.app
   tags: level_1
-  shell: |
-    su "{{ item }}"
-    defaults write -app Terminal SecureKeyboardEntry -bool true
-  with_items: "{{ local_users.stdout_lines }}"
+  osx_defaults: 
+    domain: Terminal
+    key: SecureKeyboardEntry
+    type: bool
+    value: true
+  become_user: target_user
+  become: true    
 
 - name: 2.12 Automatic Actions for Optical Media 
   tags: level_1
   shell: |
-    su "{{ item.0 }}"
+    su "{{ target_user }}"
     defaults write /Users/$user/Library/Preferences/com.apple.digihub "{{ item.1 }}" -dict action 1
   with_nested:
-    - "{{ local_users.stdout_lines }}"
     - ["com.apple.digihub.blank.cd.appeared", "com.apple.digihub.blank.dvd.appeared", "com.apple.digihub.cd.music.appeared", "com.apple.digihub.cd.picture.appeared", "com.apple.digihub.dvd.video.appeared"]
 
-- name: 2.13 Review Siri Settings
+- name: 2.13 Review Siri Settings (1)
   tags: level_1
-  shell: |
-    su "{{ item }}"
-    defaults write com.apple.assistant.support.plist 'Assistant Enabled' -bool false
-    defaults write com.apple.Siri.plist LockscreenEnabled -bool false
-    defaults write com.apple.Siri.plist StatusMenuVisible -bool false
-    defaults write com.apple.Siri.plist VoiceTriggerUserEnabled -bool false
+  osx_defaults:
+    domain: com.apple.assistant.support.plist
+    key: 'Assistant Enabled'
+    type: bool
+    value: 'false' 
+  become_user: target_user
+  become: true
+
+- name: 2.13 Review Siri Settings (2) 
+  tags: level_1
+  osx_defaults:
+    domain: com.apple.Siri.plist LockscreenEnabled
+    key: LockscreenEnabled
+    type: bool
+    value: 'false' 
+  become_user: target_user
+  become: true
+
+- name: 2.13 Review Siri Settings (3)
+  tags: level_1
+  osx_defaults:
+    domain: com.apple.Siri.plist
+    key: StatusMenuVisible
+    type: bool
+    value: 'false' 
+  become_user: 'target_user'
+  become: true
+
+- name: 2.13 Review Siri Settings (4)
+  tags: level_1
+  osx_defaults:
+    domain: com.apple.Siri.plist
+    key: VoiceTriggerUserEnabled
+    type: bool
+    value: 'false'
+  become_user: target_user
+  become: true
+
+- name: 2.13 Review Siri Settings (5)
+  tags: level_1 
+  command: |
+    su "{{ target_user }}""
     killall -HUP cfprefsd
     killall SystemUIServer
-  with_items: "{{ local_users.stdout_lines }}"
