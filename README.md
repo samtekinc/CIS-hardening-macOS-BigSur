@@ -4,6 +4,11 @@ The purpose of the CIS-hardening-macOS-BigSur Repository is to harden machines r
 
 Hardening tasks are executed using [Ansible](https://www.ansible.com/) playbooks.
 
+## Authors
+
+- Zachary Hopp [zwhopp2022](https://github.com/zwhopp2022)
+- Stephen Shaffer [t0sche](https://github.com/t0sche)
+
 ## Instructions
 ### Installing Ansible 
 To run Ansible playbooks, Ansible must be installed. Install Ansible for your desired OS [here](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#).
